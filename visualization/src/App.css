@@ -2,7 +2,118 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  /* text-align: center; */ /* Removed this, often better to control alignment per component */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; /* Example modern font stack */
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark; /* Basic light/dark mode support */
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424; /* Example dark background */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply body styles for consistent background/font if #root doesn't cover everything */
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #242424; /* Match #root background */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; /* Ensure consistency */
+}
+
+
+/* --- Chart Container --- */
+.App {
+  /* font-family: sans-serif; /* Can inherit from body/#root */
+  text-align: center; /* Center title and button */
+}
+
+/* --- Chart SVG specific styling --- */
+svg {
+  /* Inherit font */
+  font-family: inherit;
+  /* Optional: Add a subtle background to the chart area */
+  /* background-color: #f9f9f9; */ /* Light background if needed */
+  /* border: 1px solid #ccc; */ /* Optional border */
+}
+
+/* --- Axis Styling --- */
+.x-axis path.domain,
+.y-axis path.domain {
+  /* Hides the main axis lines if you prefer cleaner look */
+   display: none;
+  /* Or style them if you want them visible */
+  /* stroke: #aaa; */
+}
+
+.x-axis .tick line,
+.y-axis .tick line {
+  stroke: #777; /* Color of the small tick marks */
+  stroke-opacity: 0.7;
+}
+
+.x-axis .tick text,
+.y-axis .tick text {
+  fill: #ccc; /* Color of axis labels (light on dark bg) */
+  font-size: 11px; /* Slightly larger axis labels */
+}
+
+/* --- Gridline Styling --- */
+.grid .tick line {
+  stroke: #555; /* Darker gridlines for contrast on dark bg */
+  stroke-opacity: 0.5;
+  shape-rendering: crispEdges; /* Make lines sharp */
+}
+
+.grid path.domain {
+  stroke: none; /* Hide the axis line itself for gridlines */
+}
+
+/* --- Line Styling --- */
+.series-line {
+  fill: none; /* Lines should not be filled */
+  stroke-width: 2px;
+  transition: stroke-width 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.series-line:hover {
+  /* Optional: Make line slightly thicker on hover */
+  /* stroke-width: 3.5px; */
+}
+
+/* --- Point/Dot Styling --- */
+.series-dot {
+  stroke: #fff; /* Add a white outline to dots for better visibility */
+  stroke-width: 0.5px;
+  transition: r 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.series-dot:hover {
+  r: 6px; /* Make dots slightly larger on hover */
+  cursor: pointer; /* Indicate interactivity */
+}
+
+/* --- Legend Styling --- */
+.legend text {
+  font-size: 12px;
+  fill: #ddd; /* Light text for legend */
+  alignment-baseline: middle;
+}
+
+.legend-item {
+   /* Optional: Add hover effect if you plan interactivity */
+  /* cursor: pointer; */
+  /* transition: opacity 0.2s; */
+}
+
+.legend-item:hover {
+  /* opacity: 0.7; */
 }
 
 .logo {
@@ -19,12 +130,8 @@
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -39,4 +146,58 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* --- Button Style --- */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a; /* Darker button */
+  cursor: pointer;
+  transition: border-color 0.25s;
+  color: rgba(255, 255, 255, 0.87); /* Ensure text is visible */
+}
+button:hover {
+  border-color: #646cff; /* Highlight on hover */
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* --- Light/Dark Mode Adjustments (Optional) --- */
+@media (prefers-color-scheme: light) {
+  :root { /* or body */
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9; /* Light button background */
+    color: #213547; /* Dark button text */
+  }
+  /* Adjust chart colors for light mode */
+  .x-axis .tick text,
+  .y-axis .tick text {
+     fill: #333; /* Darker axis labels */
+  }
+   .grid .tick line {
+     stroke: #e0e0e0; /* Lighter gridlines */
+     stroke-opacity: 0.7;
+   }
+  .series-dot {
+     stroke: #333; /* Darker dot outline */
+  }
+  .legend text {
+    fill: #333; /* Darker legend text */
+  }
+   svg {
+     /* background-color: transparent; */ /* Remove specific background if needed */
+   }
 }
