@@ -1,0 +1,22 @@
+{
+  "name": "nvidia-core-visualizer",
+  "version": "1.0.0",
+  "description": "A React-based visualization tool for Nvidia GPU core trends using D3.js.",
+  "main": "src/main.jsx",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "^7.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.0",
+    "vite": "^6.2.6"
+  },
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,421 @@
+[
+  {
+    "series": "500",
+    "model": "GTX 590",
+    "cudaCores": 1024,
+    "vram": 3,
+    "releaseYear": 2011,
+    "flagship": false,
+    "specialFlagship": true
+  },
+  {
+    "series": "500",
+    "model": "GTX 580",
+    "cudaCores": 512,
+    "vram": 1.5,
+    "releaseYear": 2010,
+    "flagship": true
+  },
+  {
+    "series": "500",
+    "model": "GTX 570",
+    "cudaCores": 480,
+    "vram": 1.25,
+    "releaseYear": 2010,
+    "flagship": false
+  },
+  {
+    "series": "500",
+    "model": "GTX 560 Ti",
+    "cudaCores": 384,
+    "vram": 1,
+    "releaseYear": 2011,
+    "flagship": false
+  },
+  {
+    "series": "500",
+    "model": "GTX 560",
+    "cudaCores": 336,
+    "vram": 1,
+    "releaseYear": 2011,
+    "flagship": false
+  },
+  {
+    "series": "500",
+    "model": "GTX 550 Ti",
+    "cudaCores": 192,
+    "vram": 1,
+    "releaseYear": 2011,
+    "flagship": false
+  },
+  {
+    "series": "600",
+    "model": "GTX 690",
+    "cudaCores": 3072,
+    "vram": 4,
+    "releaseYear": 2012,
+    "flagship": false,
+    "specialFlagship": true
+  },
+  {
+    "series": "600",
+    "model": "GTX 680",
+    "cudaCores": 1536,
+    "vram": 2,
+    "releaseYear": 2012,
+    "flagship": true
+  },
+  {
+    "series": "600",
+    "model": "GTX 670",
+    "cudaCores": 1344,
+    "vram": 2,
+    "releaseYear": 2012,
+    "flagship": false
+  },
+  {
+    "series": "600",
+    "model": "GTX 660 Ti",
+    "cudaCores": 1344,
+    "vram": 2,
+    "releaseYear": 2012,
+    "flagship": false
+  },
+  {
+    "series": "600",
+    "model": "GTX 660",
+    "cudaCores": 960,
+    "vram": 2,
+    "releaseYear": 2012,
+    "flagship": false
+  },
+  {
+    "series": "600",
+    "model": "GTX 650 Ti",
+    "cudaCores": 768,
+    "vram": 1,
+    "releaseYear": 2012,
+    "flagship": false
+  },
+  {
+    "series": "600",
+    "model": "GTX 650",
+    "cudaCores": 384,
+    "vram": 1,
+    "releaseYear": 2012,
+    "flagship": false
+  },
+  {
+    "series": "700",
+    "model": "GTX 780 Ti",
+    "cudaCores": 2880,
+    "vram": 3,
+    "releaseYear": 2013,
+    "flagship": true
+  },
+  {
+    "series": "700",
+    "model": "GTX 780",
+    "cudaCores": 2304,
+    "vram": 3,
+    "releaseYear": 2013,
+    "flagship": true
+  },
+  {
+    "series": "700",
+    "model": "GTX 770",
+    "cudaCores": 1536,
+    "vram": 2,
+    "releaseYear": 2013,
+    "flagship": false
+  },
+  {
+    "series": "700",
+    "model": "GTX 760",
+    "cudaCores": 1152,
+    "vram": 2,
+    "releaseYear": 2013,
+    "flagship": false
+  },
+  {
+    "series": "700",
+    "model": "GTX 750 Ti",
+    "cudaCores": 640,
+    "vram": 2,
+    "releaseYear": 2014,
+    "flagship": false
+  },
+  {
+    "series": "700",
+    "model": "GTX 750",
+    "cudaCores": 512,
+    "vram": 1,
+    "releaseYear": 2014,
+    "flagship": false
+  },
+  {
+    "series": "900",
+    "model": "GTX 980 Ti",
+    "cudaCores": 2816,
+    "vram": 6,
+    "releaseYear": 2015,
+    "flagship": true
+  },
+  {
+    "series": "900",
+    "model": "GTX 980",
+    "cudaCores": 2048,
+    "vram": 4,
+    "releaseYear": 2014,
+    "flagship": true
+  },
+  {
+    "series": "900",
+    "model": "GTX 970",
+    "cudaCores": 1664,
+    "vram": 4,
+    "releaseYear": 2014,
+    "flagship": false
+  },
+  {
+    "series": "900",
+    "model": "GTX 960",
+    "cudaCores": 1024,
+    "vram": 2,
+    "releaseYear": 2015,
+    "flagship": false
+  },
+  {
+    "series": "900",
+    "model": "GTX 950",
+    "cudaCores": 768,
+    "vram": 2,
+    "releaseYear": 2015,
+    "flagship": false
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1080 Ti",
+    "cudaCores": 3584,
+    "vram": 11,
+    "releaseYear": 2017,
+    "flagship": true
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1080",
+    "cudaCores": 2560,
+    "vram": 8,
+    "releaseYear": 2016,
+    "flagship": true
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1070 Ti",
+    "cudaCores": 2432,
+    "vram": 8,
+    "releaseYear": 2017,
+    "flagship": false
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1070",
+    "cudaCores": 1920,
+    "vram": 8,
+    "releaseYear": 2016,
+    "flagship": false
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1060",
+    "cudaCores": 1280,
+    "vram": 6,
+    "releaseYear": 2016,
+    "flagship": false
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1050 Ti",
+    "cudaCores": 768,
+    "vram": 4,
+    "releaseYear": 2016,
+    "flagship": false
+  },
+  {
+    "series": "1000",
+    "model": "GTX 1050",
+    "cudaCores": 640,
+    "vram": 2,
+    "releaseYear": 2016,
+    "flagship": false
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2080 Ti",
+    "cudaCores": 4352,
+    "vram": 11,
+    "releaseYear": 2018,
+    "flagship": true
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2080",
+    "cudaCores": 2944,
+    "vram": 8,
+    "releaseYear": 2018,
+    "flagship": true
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2070 Super",
+    "cudaCores": 2560,
+    "vram": 8,
+    "releaseYear": 2019,
+    "flagship": false
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2070",
+    "cudaCores": 2304,
+    "vram": 8,
+    "releaseYear": 2018,
+    "flagship": false
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2060 Super",
+    "cudaCores": 2176,
+    "vram": 8,
+    "releaseYear": 2019,
+    "flagship": false
+  },
+  {
+    "series": "2000",
+    "model": "RTX 2060",
+    "cudaCores": 1920,
+    "vram": 6,
+    "releaseYear": 2019,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3090 TI",
+    "cudaCores": 10752,
+    "vram": 24,
+    "releaseYear": 2022,
+    "flagship": false,
+    "specialFlagship": true
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3090",
+    "cudaCores": 10496,
+    "vram": 24,
+    "releaseYear": 2020,
+    "flagship": true
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3080 Ti",
+    "cudaCores": 10240,
+    "vram": 12,
+    "releaseYear": 2021,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3080",
+    "cudaCores": 8704,
+    "vram": 10,
+    "releaseYear": 2020,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3070 Ti",
+    "cudaCores": 6144,
+    "vram": 8,
+    "releaseYear": 2021,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3070",
+    "cudaCores": 5888,
+    "vram": 8,
+    "releaseYear": 2020,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3060 Ti",
+    "cudaCores": 4864,
+    "vram": 8,
+    "releaseYear": 2020,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3060",
+    "cudaCores": 3584,
+    "vram": 12,
+    "releaseYear": 2021,
+    "flagship": false
+  },
+  {
+    "series": "3000",
+    "model": "RTX 3050",
+    "cudaCores": 2560,
+    "vram": 8,
+    "releaseYear": 2022,
+    "flagship": false
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4090",
+    "cudaCores": 16384,
+    "vram": 24,
+    "releaseYear": 2022,
+    "flagship": true
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4080",
+    "cudaCores": 9728,
+    "vram": 16,
+    "releaseYear": 2022,
+    "flagship": true
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4070 Ti",
+    "cudaCores": 7680,
+    "vram": 12,
+    "releaseYear": 2023,
+    "flagship": false
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4070",
+    "cudaCores": 5888,
+    "vram": 12,
+    "releaseYear": 2023,
+    "flagship": false
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4060 Ti",
+    "cudaCores": 4352,
+    "vram": 8,
+    "releaseYear": 2023,
+    "flagship": false
+  },
+  {
+    "series": "4000",
+    "model": "RTX 4060",
+    "cudaCores": 3072,
+    "vram": 8,
+    "releaseYear": 2023,
+    "flagship": false
+  }
+]
