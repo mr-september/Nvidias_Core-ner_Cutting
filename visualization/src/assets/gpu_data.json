@@ -111,7 +111,8 @@
     "cudaCores": 2880,
     "vram": 3,
     "releaseYear": 2013,
-    "flagship": true
+    "flagship": false,
+    "specialFlagship": true
   },
   {
     "series": "700",
@@ -159,7 +160,8 @@
     "cudaCores": 2816,
     "vram": 6,
     "releaseYear": 2015,
-    "flagship": true
+    "flagship": false,
+    "specialFlagship": true
   },
   {
     "series": "900",
@@ -199,7 +201,8 @@
     "cudaCores": 3584,
     "vram": 11,
     "releaseYear": 2017,
-    "flagship": true
+    "flagship": false,
+    "specialFlagship": true
   },
   {
     "series": "1000",
@@ -263,14 +266,6 @@
     "cudaCores": 2944,
     "vram": 8,
     "releaseYear": 2018,
-    "flagship": true
-  },
-  {
-    "series": "2000",
-    "model": "RTX 2070 Super",
-    "cudaCores": 2560,
-    "vram": 8,
-    "releaseYear": 2019,
     "flagship": false
   },
   {
@@ -286,14 +281,6 @@
     "model": "RTX 2060 Super",
     "cudaCores": 2176,
     "vram": 8,
-    "releaseYear": 2019,
-    "flagship": false
-  },
-  {
-    "series": "2000",
-    "model": "RTX 2060",
-    "cudaCores": 1920,
-    "vram": 6,
     "releaseYear": 2019,
     "flagship": false
   },
@@ -320,7 +307,7 @@
     "cudaCores": 10240,
     "vram": 12,
     "releaseYear": 2021,
-    "flagship": false
+    "flagship": false    
   },
   {
     "series": "3000",
@@ -384,7 +371,7 @@
     "cudaCores": 9728,
     "vram": 16,
     "releaseYear": 2022,
-    "flagship": true
+    "flagship": false
   },
   {
     "series": "4000",
@@ -416,6 +403,49 @@
     "cudaCores": 3072,
     "vram": 8,
     "releaseYear": 2023,
+    "flagship": false
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5090",
+    "cudaCores": 21760,
+    "vram": 32,
+    "flagship": true,
+    "specialFlagship": false 
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5080",
+    "cudaCores": 10752,
+    "vram": 16,
+    "flagship": false
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5070 Ti",
+    "cudaCores": 8960,
+    "vram": 16,
+    "flagship": false
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5070",
+    "cudaCores": 6144,
+    "vram": 12,
+    "flagship": false
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5060 Ti",
+    "cudaCores": 4608,
+    "vram": 8,
+    "flagship": false
+  },
+  {
+    "series": "5000",
+    "model": "RTX 5060",
+    "cudaCores": 3840,
+    "vram": 8,
     "flagship": false
   }
 ]

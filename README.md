@@ -8,29 +8,10 @@ This project visualizes the trend of NVIDIA's GPU CUDA core counts and VRAM over
 - Responsive design for desktop and mobile.
 
 ## Technologies Used
-- **React**: For building the user interface.
-- **Vite**: For fast development and build processes.
-- **Tailwind CSS**: For modern and responsive styling.
-- **D3.js**: For creating interactive visualizations.
-
-## Setup Instructions
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/Nvidias_Core-ner_Cutting.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd Nvidias_Core-ner_Cutting/visualization
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-5. Open your browser and navigate to `http://localhost:5173`.
+- **React**
+- **Vite**
+- **Tailwind CSS**
+- **D3.js**
 
 ## Deployment
 This project is configured to be deployed on GitHub Pages. To deploy:
@@ -42,6 +23,9 @@ This project is configured to be deployed on GitHub Pages. To deploy:
    ```bash
    npm run deploy
    ```
+
+## Acknowledgements
+[u/brennan313](brennan313) for the background image.
 
 ## License
 This project is licensed under the MIT License.

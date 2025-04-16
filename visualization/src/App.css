@@ -7,7 +7,7 @@
   font-weight: 400;
   color-scheme: light dark; /* Basic light/dark mode support */
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424; /* Example dark background */
+  background-color: transparent; /* Changed from #242424 to transparent */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,8 +22,37 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #242424; /* Match #root background */
+  background-color: transparent; /* Changed from #242424 to transparent */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; /* Ensure consistency */
+  position: relative;
+}
+
+/* Background image with increased blur and darker, greyer filter */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('./assets/background.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(25px) brightness(0.15) saturate(0.6); /* Increased blur, darker and desaturated */
+  z-index: -2; /* Behind content */
+}
+
+/* Add an additional darkening overlay that's more grey to match plot background */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(36, 36, 36, 0.85); /* Semi-transparent grey overlay matching #242424 */
+  z-index: -1; /* Between blur and content */
 }
 
 
@@ -42,9 +71,10 @@ svg {
 
 /* Chart background styling */
 .chart-background {
-  /* Border color */
-  stroke: rgba(80, 80, 80, 0.5);
-  stroke-width: 1;
+  /* Completely transparent to let blurred background image show through */
+  fill: transparent;
+  stroke: transparent; /* Changed from semi-transparent grey to completely transparent */
+  stroke-width: 0; /* Reduced from 1 to 0 */
 }
 
 /* --- Axis Styling --- */
@@ -223,4 +253,64 @@ button:focus-visible {
   svg {
     background-color: transparent; /* Ensure transparent SVG background */
   }
+}
+
+/* Add these styles for column hover overlay and tooltip */
+.column-overlay {
+  fill: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.column-overlay:hover {
+  opacity: 1;
+}
+
+.tooltip-container {
+  position: absolute;
+  background-color: rgba(30, 30, 30, 0.9);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  max-height: none; /* Remove maximum height */
+  overflow-y: visible; /* Remove scrollbar */
+  width: 200px;
+  font-size: 0.8em; /* Reduced base font size */
+  transform: translateY(-50%); /* Vertically center relative to cursor position */
+}
+
+.tooltip-container .title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.1em; /* Keep title at normal size */
+}
+
+.tooltip-container .gpu-item {
+  margin-bottom: 6px; /* Reduced spacing */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 6px; /* Reduced padding */
+}
+
+.tooltip-container .gpu-item:last-child {
+  border-bottom: none;
+}
+
+.tooltip-container .color-indicator {
+  display: inline-block;
+  width: 8px; /* Smaller color indicator */
+  height: 8px; /* Smaller color indicator */
+  margin-right: 4px; /* Reduced margin */
+}
+
+.tooltip-container .model-name {
+  font-weight: bold;
+  font-size: 0.9em; /* Smaller model name */
+}
+
+.tooltip-container .cores-info {
+  margin-left: 12px; /* Reduced margin */
+  font-size: 0.85em; /* Even smaller info text */
 }
