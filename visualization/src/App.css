@@ -2,8 +2,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  /* text-align: center; */ /* Removed this, often better to control alignment per component */
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; /* Example modern font stack */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; 
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark; /* Basic light/dark mode support */
@@ -30,7 +29,6 @@ body {
 
 /* --- Chart Container --- */
 .App {
-  /* font-family: sans-serif; /* Can inherit from body/#root */
   text-align: center; /* Center title and button */
 }
 
@@ -38,9 +36,15 @@ body {
 svg {
   /* Inherit font */
   font-family: inherit;
-  /* Optional: Add a subtle background to the chart area */
-  /* background-color: #f9f9f9; */ /* Light background if needed */
-  /* border: 1px solid #ccc; */ /* Optional border */
+  /* Background now handled by chart-background rect */
+  background-color: transparent;
+}
+
+/* Chart background styling */
+.chart-background {
+  /* Border color */
+  stroke: rgba(80, 80, 80, 0.5);
+  stroke-width: 1;
 }
 
 /* --- Axis Styling --- */
@@ -48,8 +52,6 @@ svg {
 .y-axis path.domain {
   /* Hides the main axis lines if you prefer cleaner look */
    display: none;
-  /* Or style them if you want them visible */
-  /* stroke: #aaa; */
 }
 
 .x-axis .tick line,
@@ -84,7 +86,7 @@ svg {
 
 .series-line:hover {
   /* Optional: Make line slightly thicker on hover */
-  /* stroke-width: 3.5px; */
+  stroke-width: 3.5px;
 }
 
 /* --- Point/Dot Styling --- */
@@ -103,17 +105,30 @@ svg {
 .legend text {
   font-size: 12px;
   fill: #ddd; /* Light text for legend */
-  alignment-baseline: middle;
+  dominant-baseline: middle; /* Fixed from alignment-baseline */
+}
+
+.flagship-text {
+  fill: #aaa; /* Slightly dimmer text for flagship info */
 }
 
 .legend-item {
-   /* Optional: Add hover effect if you plan interactivity */
-  /* cursor: pointer; */
-  /* transition: opacity 0.2s; */
+  cursor: default; /* Default cursor for non-clickable areas */
 }
 
-.legend-item:hover {
-  /* opacity: 0.7; */
+/* Toggle button styling */
+.toggle-btn {
+  transition: fill 0.3s ease;
+}
+
+.toggle-btn:hover {
+  fill: #535bf2;
+  filter: brightness(1.2);
+}
+
+.toggle-text {
+  font-weight: 500;
+  pointer-events: none;
 }
 
 .logo {
@@ -158,11 +173,12 @@ button {
   font-family: inherit;
   background-color: #1a1a1a; /* Darker button */
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s;
   color: rgba(255, 255, 255, 0.87); /* Ensure text is visible */
 }
 button:hover {
   border-color: #646cff; /* Highlight on hover */
+  background-color: #2a2a2a;
 }
 button:focus,
 button:focus-visible {
@@ -187,17 +203,24 @@ button:focus-visible {
   .y-axis .tick text {
      fill: #333; /* Darker axis labels */
   }
-   .grid .tick line {
+  .grid .tick line {
      stroke: #e0e0e0; /* Lighter gridlines */
      stroke-opacity: 0.7;
-   }
+  }
   .series-dot {
      stroke: #333; /* Darker dot outline */
   }
   .legend text {
     fill: #333; /* Darker legend text */
   }
-   svg {
-     /* background-color: transparent; */ /* Remove specific background if needed */
-   }
+  .flagship-text {
+    fill: #555; /* Darker flagship info text */
+  }
+  .chart-background {
+    fill: rgba(245, 245, 250, 0.7); /* Light semi-transparent */
+    stroke: rgba(180, 180, 180, 0.5);
+  }
+  svg {
+    background-color: transparent; /* Ensure transparent SVG background */
+  }
 }
