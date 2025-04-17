@@ -159,7 +159,7 @@ function App() {
         } else if (useLogScale) {
             // Use log scale for absolute mode when toggled on
             yScale = d3.scaleLog()
-                .domain([100, yMaxAbsolute]) // Start at 100 instead of 10 for log scale
+                .domain([100, 30000]) // Start at 100 instead of 10 for log scale
                 .range([height, 0])
                 .nice();
         } else {
