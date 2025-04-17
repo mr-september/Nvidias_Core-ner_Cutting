@@ -195,6 +195,51 @@
     "releaseYear": 2015,
     "flagship": false
   },
+    {
+    "series": "500",
+    "model": "GT 530",
+    "cudaCores": 96,
+    "vram": 2,
+    "releaseYear": 2011,
+    "flagship": false,
+    "specialFlagship": false
+  },
+  {
+    "series": "600",
+    "model": "GT 630",
+    "cudaCores": 96,
+    "vram": 2,
+    "releaseYear": 2012,
+    "flagship": false,
+    "specialFlagship": false
+  },
+  {
+    "series": "700",
+    "model": "GT 730",
+    "cudaCores": 384,
+    "vram": 2,
+    "releaseYear": 2014,
+    "flagship": false,
+    "specialFlagship": false
+  },
+  {
+    "series": "10",
+    "model": "GT 1030",
+    "cudaCores": 384,
+    "vram": 2,
+    "releaseYear": 2017,
+    "flagship": false,
+    "specialFlagship": false
+  },
+  {
+    "series": "1600",
+    "model": "GTX 1630",
+    "cudaCores": 512,
+    "vram": 4,
+    "releaseYear": 2022,
+    "flagship": false,
+    "specialFlagship": false
+  },
   {
     "series": "1000",
     "model": "GTX 1080 Ti",
@@ -203,6 +248,31 @@
     "releaseYear": 2017,
     "flagship": false,
     "specialFlagship": true
+  },
+  {
+    "series": "1600",
+    "model": "GTX 1650",
+    "cudaCores": 896,
+    "vram": 4,
+    "releaseYear": 2019,
+    "flagship": false
+  },
+  {
+    "series": "1600",
+    "model": "GTX 1660",
+    "cudaCores": 1408,
+    "vram": 6,
+    "releaseYear": 2019,
+    "flagship": false
+  },
+  {
+    "series": "1600",
+    "model": "GTX 1660 Ti",
+    "cudaCores": 1536,
+    "vram": 6,
+    "releaseYear": 2019,
+    "flagship": false,
+    "specialFlagship": false
   },
   {
     "series": "1000",

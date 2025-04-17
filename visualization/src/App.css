@@ -39,7 +39,7 @@ body::before {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  filter: blur(25px) brightness(0.15) saturate(0.6); /* Increased blur, darker and desaturated */
+  filter: blur(20px) brightness(0.15) saturate(0.6); /* Increased blur, darker and desaturated */
   z-index: -2; /* Behind content */
 }
 

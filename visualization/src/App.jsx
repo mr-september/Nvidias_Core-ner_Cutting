@@ -5,7 +5,7 @@ import gpuData from './assets/gpu_data.json';
 
 // Define the order of GPU tiers for the X-axis
 // This defines the columns from left to right
-const columnOrder = ["90", "80 Ti", "80", "70 Ti", "70", "60 Ti", "60", "50 Ti", "50"];
+const columnOrder = ["90", "80 Ti", "80", "70 Ti", "70", "60 Ti", "60", "50 Ti", "50", "30"];
 
 // Helper function to extract the tier string (e.g., "90 Ti", "80") from a model name
 const getTierFromModel = (modelName) => {
@@ -86,7 +86,7 @@ function App() {
         svg.selectAll("*").remove(); // Clear previous renders
 
         // --- Chart Dimensions and Margins ---
-        const margin = { top: 60, right: 250, bottom: 50, left: 60 };
+        const margin = { top: 60, right: 250, bottom: 50, left: 90 }; // Increased left margin from 60 to 90 for y-axis label
         const width = 900 - margin.left - margin.right;
         const height = 450 - margin.top - margin.bottom;
 
@@ -120,8 +120,13 @@ function App() {
             .range([0, width])
             .padding(0.5);
 
+        // Find maximum CUDA cores for absolute mode
+        const maxCudaCores = d3.max(gpuData, d => d.cudaCores);
+        // Round up to nice value for y-axis
+        const yMaxAbsolute = Math.ceil(maxCudaCores / 1000) * 1000;
+
         const yScale = d3.scaleLinear()
-            .domain([0, 110])
+            .domain(toggleMode ? [0, 110] : [0, yMaxAbsolute])
             .range([height, 0]);
 
         const generations = Array.from(new Set(gpuData.map(d => d.series)));
@@ -142,15 +147,35 @@ function App() {
             .selectAll("text")
               .style("text-anchor", "middle") // Ensure labels are centered
               .attr("dy", "1em"); // Adjust vertical position if needed
+              
+        // Add X axis label
+        chartGroup.append("text")
+            .attr("class", "x-axis-label")
+            .attr("text-anchor", "middle")
+            .attr("x", width / 2)
+            .attr("y", height + 40)
+            .attr("fill", "#ddd")
+            .style("font-size", "12px")
+            .text("GPU Class");
 
-
-        // Y-Axis
+        // Y-Axis with dynamic formatting based on mode
         const yAxis = d3.axisLeft(yScale)
-            .tickFormat(d => `${d}%`);
+            .tickFormat(d => toggleMode ? `${d}%` : d3.format(",")(d));
 
         chartGroup.append("g")
             .attr("class", "y-axis")
             .call(yAxis);
+            
+        // Add Y axis label
+        chartGroup.append("text")
+            .attr("class", "y-axis-label")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .attr("y", toggleMode ? -45 : -55) // Move the label further left when showing CUDA cores
+            .attr("x", -height / 2)
+            .attr("fill", "#ddd")
+            .style("font-size", "12px")
+            .text(toggleMode ? "Percentage of Flagship CUDA Cores" : "Number of CUDA Cores");
 
         // Y-Axis Gridlines
         const yGridlines = d3.axisLeft(yScale)
@@ -172,6 +197,13 @@ function App() {
         });
         
         // --- Process Data and Draw Lines/Points ---
+        // Find the 2000 series flagship for normalizing the 1600 series
+        const series2000Data = gpuData.filter(d => d.series === "2000");
+        const regularFlagship2000 = series2000Data.find(d => d.flagship);
+        const specialFlagship2000 = series2000Data.find(d => d.specialFlagship);
+        const useSpecial2000 = specialFlagshipActive["2000"] && specialFlagship2000;
+        const flagship2000 = useSpecial2000 ? specialFlagship2000 : regularFlagship2000;
+            
         generations.forEach(series => {
             const seriesData = gpuData.filter(d => d.series === series);
 
@@ -184,7 +216,13 @@ function App() {
             let useSpecial = specialFlagshipActive[series] && specialFlagship;
             
             // Select the flagship to use for calculations
-            let flagship = useSpecial ? specialFlagship : regularFlagship;
+            // For 1600 series, use the 2000 series flagship
+            let flagship;
+            if (series === "1600" && flagship2000) {
+                flagship = flagship2000; // Use 2000 series flagship for 1600 series normalization
+            } else {
+                flagship = useSpecial ? specialFlagship : regularFlagship;
+            }
             
             if (!flagship) {
                  // Fallback: find highest CUDA card if no explicit flagship
@@ -250,7 +288,9 @@ function App() {
                         return xScale(columnOrder[d.columnIndex]); // Fallback
                     }
                 })
-                .y(d => yScale(d.normalizedCores)) // Use yScale for Y position
+                .y(d => toggleMode ? 
+                   yScale(d.normalizedCores) : 
+                   yScale(d.cudaCores)) // Use different y value based on mode
                 .defined(d => d.normalizedCores !== null); // Only define if cores exist
 
 
@@ -288,11 +328,15 @@ function App() {
                         return xScale(columnOrder[d.columnIndex]); // Fallback
                     }
                 })
-                .attr('cy', d => yScale(d.normalizedCores))
+                .attr('cy', d => toggleMode ? 
+                   yScale(d.normalizedCores) : 
+                   yScale(d.cudaCores)) // Use different y value based on mode
                 .attr('r', 4) // All points visible (they're already filtered)
                 .attr('fill', colorScale(series))
                 .append('title') // Basic tooltip for individual points
-                    .text(d => `${d.model} (${d.series})\nCores: ${d.cudaCores}\nNormalized: ${d.normalizedCores.toFixed(1)}%`);
+                    .text(d => toggleMode ? 
+                      `${d.model} (${d.series})\nCores: ${d.cudaCores}\nNormalized: ${d.normalizedCores.toFixed(1)}%` :
+                      `${d.model} (${d.series})\nCores: ${d.cudaCores.toLocaleString()}`);
             
             // Also add this data to our column-organized collection for the hover overlay
             processedData.forEach(d => {
@@ -301,6 +345,50 @@ function App() {
                 }
             });
         });
+
+        // --- Add special connection between 1600 series and 2000 series ---
+        // Find the GTX 1660 Ti from the 1600 series
+        const gtx1660Ti = gpuData.find(d => d.model === "GTX 1660 Ti" && d.series === "1600");
+        // Find the RTX 2080 Ti from the 2000 series
+        const rtx2080Ti = gpuData.find(d => d.model === "RTX 2080 Ti" && d.series === "2000");
+
+        if (gtx1660Ti && rtx2080Ti && toggleMode) {  // Only show this connection in toggle mode
+            // Calculate normalized CUDA cores for 1660 Ti relative to 2080 Ti's flagship value
+            // Find 2000 series flagship
+            const series2000Data = gpuData.filter(d => d.series === "2000");
+            const flagship2000 = series2000Data.find(d => d.flagship) || rtx2080Ti;
+            
+            const gtx1660TiNormalizedCores = (gtx1660Ti.cudaCores / flagship2000.cudaCores) * 100;
+            const tier1660Ti = getTierFromModel(gtx1660Ti.model);
+            const tier2080Ti = getTierFromModel(rtx2080Ti.model);
+            
+            if (tier1660Ti && tier2080Ti) {
+                const columnIndex1660Ti = columnOrder.indexOf(tier1660Ti);
+                const columnIndex2080Ti = columnOrder.indexOf(tier2080Ti);
+                
+                if (columnIndex1660Ti !== -1 && columnIndex2080Ti !== -1) {
+                    // Draw a dashed connection line between the two points
+                    chartGroup.append('path')
+                        .attr('stroke', colorScale("1600"))  // Using the 1600 series color
+                        .attr('stroke-width', 1.5)
+                        .attr('stroke-dasharray', '5,5')  // Dashed line
+                        .attr('fill', 'none')
+                        .attr('d', d3.line()([
+                            [xScale(columnOrder[columnIndex1660Ti]), yScale(gtx1660TiNormalizedCores)],
+                            [xScale(columnOrder[columnIndex2080Ti]), yScale(100)]  // 100% is the flagship reference
+                        ]));
+                        
+                    // Add a small label to explain the connection
+                    chartGroup.append('text')
+                        .attr('x', (xScale(columnOrder[columnIndex1660Ti]) + xScale(columnOrder[columnIndex2080Ti])) / 2)
+                        .attr('y', (yScale(gtx1660TiNormalizedCores) + yScale(100)) / 2 - 10)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '10px')
+                        .attr('fill', 'rgba(80, 80, 80, 0.9)')
+                        .text('Same generation');
+                }
+            }
+        }
 
         // --- Enhanced Legend with Flagship Info and Special Flagship Toggle ---
         const legend = chartGroup.append("g")
@@ -471,8 +559,8 @@ function App() {
                                         ${gpu.model}
                                     </span>
                                     <div class="cores-info">
-                                        Cores: ${gpu.cudaCores}<br>
-                                        Normalized: ${gpu.normalizedCores.toFixed(1)}%
+                                        Cores: ${gpu.cudaCores.toLocaleString()}<br>
+                                        ${toggleMode ? `Normalized: ${gpu.normalizedCores.toFixed(1)}%` : ''}
                                     </div>
                                 </div>
                             `;
@@ -493,6 +581,9 @@ function App() {
     return (
         <div className="App">
             <h1 style={{ textAlign: 'center', margin: '20px 0' }}>Nvidia's Core-ner Cutting</h1>
+            <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
+                This visualization tracks NVIDIA's CUDA core counts across GPU generations, tracking how lower-tier cards receive proportionally fewer cores over time compared to flagship models.
+            </p>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', margin: '10px auto' }}>
                 <button
                     onClick={() => setToggleMode(!toggleMode)}
