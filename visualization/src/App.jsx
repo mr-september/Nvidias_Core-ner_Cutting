@@ -50,6 +50,8 @@ function App() {
     
     // New state to track which generations are visible for CUDA cores chart (all visible by default)
     const [activeGenerations, setActiveGenerations] = useState({});
+    // State to track if all generations should be shown for CUDA cores chart
+    const [showAllCudaGenerations, setShowAllCudaGenerations] = useState(true);
     
     // New state to track which generations are visible for VRAM chart (all visible by default)
     const [vramActiveGenerations, setVramActiveGenerations] = useState({});
@@ -146,8 +148,17 @@ function App() {
 
         // Find maximum CUDA cores for absolute mode
         const maxCudaCores = d3.max(gpuData, d => d.cudaCores);
-        // Round up to nice value for y-axis
+        // Round up to nice value for y-axis (used for linear scale)
         const yMaxAbsolute = Math.ceil(maxCudaCores / 1000) * 1000;
+        
+        // Calculate a nicer rounded maximum for log scale (round to first significant digit)
+        // For example: 23,142 → 30,000, 45,678 → 50,000, 123,456 → 200,000
+        const calculateLogMax = (value) => {
+            const numDigits = Math.floor(Math.log10(value)) + 1;
+            const scale = Math.pow(10, numDigits - 1);
+            return Math.ceil(value / scale) * scale;
+        };
+        const yMaxLog = calculateLogMax(maxCudaCores);
         
         // Create appropriate scale based on toggle mode and log scale setting
         let yScale;
@@ -159,9 +170,8 @@ function App() {
         } else if (useLogScale) {
             // Use log scale for absolute mode when toggled on
             yScale = d3.scaleLog()
-                .domain([100, 30000]) // Start at 100 instead of 10 for log scale
-                .range([height, 0])
-                .nice();
+                .domain([100, yMaxLog])
+                .range([height, 0]);
         } else {
             // Default linear scale for absolute mode
             yScale = d3.scaleLinear()
@@ -399,9 +409,32 @@ function App() {
                 .attr('r', 4) // All points visible (they're already filtered)
                 .attr('fill', colorScale(series))
                 .append('title') // Basic tooltip for individual points
-                    .text(d => toggleMode ? 
-                      `${d.model} (${d.series})\nCores: ${d.cudaCores}\nNormalized: ${d.normalizedCores.toFixed(1)}%` :
-                      `${d.model} (${d.series})\nCores: ${d.cudaCores.toLocaleString()}`);
+                    .text(d => {
+                        if (!toggleMode) {
+                            return `${d.model} (${d.series})\nCores: ${d.cudaCores.toLocaleString()}`;
+                        } else {
+                            // For normalized mode, get the flagship model name to show which card it's compared to
+                            const seriesData = gpuData.filter(gpu => gpu.series === d.series);
+                            let flagshipModel = "";
+                            
+                            // Special case for 1600 series which uses 2000 series as reference
+                            if (d.series === "1600") {
+                                const series2000Data = gpuData.filter(gpu => gpu.series === "2000");
+                                const flagship2000 = specialFlagshipActive["2000"] && series2000Data.find(gpu => gpu.specialFlagship) 
+                                    ? series2000Data.find(gpu => gpu.specialFlagship) 
+                                    : series2000Data.find(gpu => gpu.flagship);
+                                flagshipModel = flagship2000 ? flagship2000.model : "Unknown flagship";
+                            } else {
+                                // Normal case - get the appropriate flagship based on toggle state
+                                const regularFlagship = seriesData.find(gpu => gpu.flagship);
+                                const specialFlagship = seriesData.find(gpu => gpu.specialFlagship);
+                                const useSpecial = specialFlagshipActive[d.series] && specialFlagship;
+                                flagshipModel = useSpecial ? specialFlagship.model : (regularFlagship ? regularFlagship.model : "Unknown flagship");
+                            }
+                            
+                            return `${d.model} (${d.series})\nCores: ${d.cudaCores}\nVs ${flagshipModel}: ${d.normalizedCores.toFixed(1)}%`;
+                        }
+                    });
             
             // Also add this data to our column-organized collection for the hover overlay
             processedData.forEach(d => {
@@ -417,7 +450,9 @@ function App() {
         // Find the RTX 2080 Ti from the 2000 series
         const rtx2080Ti = gpuData.find(d => d.model === "RTX 2080 Ti" && d.series === "2000");
 
-        if (gtx1660Ti && rtx2080Ti && toggleMode) {  // Only show this connection in toggle mode
+        if (gtx1660Ti && rtx2080Ti && toggleMode && 
+            activeGenerations["1600"] !== false && 
+            activeGenerations["2000"] !== false) {  // Only show this connection when both generations are active and in toggle mode
             // Calculate normalized CUDA cores for 1660 Ti relative to 2080 Ti's flagship value
             // Find 2000 series flagship
             const series2000Data = gpuData.filter(d => d.series === "2000");
@@ -449,8 +484,7 @@ function App() {
                         .attr('y', (yScale(gtx1660TiNormalizedCores) + yScale(100)) / 2 - 10)
                         .attr('text-anchor', 'middle')
                         .attr('font-size', '10px')
-                        .attr('fill', 'rgba(80, 80, 80, 0.9)')
-                        .text('Same generation');
+                        .attr('fill', 'rgba(80, 80, 80, 0.9)');
                 }
             }
         }
@@ -497,16 +531,33 @@ function App() {
             .attr("width", 15)
             .attr("height", 15)
             .attr("fill", d => activeGenerations[d.series] ? colorScale(d.series) : "#555") // Dim when inactive
-            .attr("stroke", d => colorScale(d.series))
+            .attr("stroke", "#ddd") // Add white border
             .attr("stroke-width", 1)
+            .attr("rx", 3) // Rounded corners
+            .attr("ry", 3) // Rounded corners
             .attr("cursor", "pointer")
             .attr("opacity", d => activeGenerations[d.series] ? 1 : 0.5) // Dim inactive generations
             .on("click", function(event, d) {
                 // Toggle this generation's visibility
-                setActiveGenerations(prev => ({
-                    ...prev,
-                    [d.series]: !prev[d.series]
-                }));
+                setActiveGenerations(prev => {
+                    const newState = {
+                        ...prev,
+                        [d.series]: !prev[d.series]
+                    };
+                    
+                    // If we're deselecting a generation and "Show All" is active, uncheck "Show All"
+                    if (prev[d.series] && showAllCudaGenerations) {
+                        setShowAllCudaGenerations(false);
+                    }
+                    
+                    // If all generations become selected, check "Show All"
+                    const allSelected = Object.values(newState).every(value => value === true);
+                    if (allSelected) {
+                        setShowAllCudaGenerations(true);
+                    }
+                    
+                    return newState;
+                });
             });
 
         // Series name with toggle functionality
@@ -521,10 +572,25 @@ function App() {
             .attr("cursor", "pointer")
             .on("click", function(event, d) {
                 // Toggle this generation's visibility (same as rect click)
-                setActiveGenerations(prev => ({
-                    ...prev,
-                    [d.series]: !prev[d.series]
-                }));
+                setActiveGenerations(prev => {
+                    const newState = {
+                        ...prev,
+                        [d.series]: !prev[d.series]
+                    };
+                    
+                    // If we're deselecting a generation and "Show All" is active, uncheck "Show All"
+                    if (prev[d.series] && showAllCudaGenerations) {
+                        setShowAllCudaGenerations(false);
+                    }
+                    
+                    // If all generations become selected, check "Show All"
+                    const allSelected = Object.values(newState).every(value => value === true);
+                    if (allSelected) {
+                        setShowAllCudaGenerations(true);
+                    }
+                    
+                    return newState;
+                });
             });
 
         // Flagship model name
@@ -585,6 +651,53 @@ function App() {
             .style("fill", "#fff")
             .attr("pointer-events", "none") // Make text not capture clicks
             .attr("class", "toggle-text");
+            
+        // Add "Show All Generations" checkbox at the bottom
+        const showAllCudaGroup = legend.append("g")
+            .attr("class", "legend-item")
+            .attr("transform", `translate(0, ${generationInfo.length * 35 + 10})`);
+            
+        showAllCudaGroup.append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("stroke", "#ddd")
+            .attr("fill", showAllCudaGenerations ? "#646cff" : "transparent")
+            .attr("rx", 3)
+            .attr("ry", 3)
+            .attr("cursor", "pointer")
+            .on("click", function() {
+                // Check if we're currently showing all
+                if (showAllCudaGenerations) {
+                    // If already showing all, switch to hiding all
+                    const allFalse = {};
+                    generations.forEach(gen => {
+                        allFalse[gen] = false;
+                    });
+                    setActiveGenerations(allFalse);
+                    setShowAllCudaGenerations(false); // Uncheck "Show All"
+                } else {
+                    // If not showing all, check if all are currently hidden
+                    const allHidden = Object.values(activeGenerations).every(value => value === false);
+                    
+                    // Whether all are hidden or some are visible, show all
+                    const allTrue = {};
+                    generations.forEach(gen => {
+                        allTrue[gen] = true;
+                    });
+                    setActiveGenerations(allTrue);
+                    setShowAllCudaGenerations(true); // Check "Show All"
+                }
+            });
+            
+        showAllCudaGroup.append("text")
+            .attr("x", 25)
+            .attr("y", 12)
+            .attr("fill", "#ddd")
+            .style("font-size", "12px")
+            .text("Show All Generations")
+            .attr("alignment-baseline", "middle");
             
         // Create column overlays for hover effect
         columnOrder.forEach(column => {
@@ -660,6 +773,31 @@ function App() {
                     
                     if (tooltipGpus && tooltipGpus.length > 0) {
                         tooltipGpus.forEach(gpu => {
+                            // Get flagship information for comparison label
+                            let flagshipInfo = '';
+                            if (toggleMode) {
+                                // If in normalized mode, get the flagship model name for comparison
+                                const seriesData = gpuData.filter(g => g.series === gpu.series);
+                                let flagshipModel = "";
+                                
+                                // Special case for 1600 series which uses 2000 series as reference
+                                if (gpu.series === "1600") {
+                                    const series2000Data = gpuData.filter(g => g.series === "2000");
+                                    const flagship2000 = specialFlagshipActive["2000"] && series2000Data.find(g => g.specialFlagship) 
+                                        ? series2000Data.find(g => g.specialFlagship) 
+                                        : series2000Data.find(g => g.flagship);
+                                    flagshipModel = flagship2000 ? flagship2000.model : "Unknown flagship";
+                                } else {
+                                    // Normal case - get appropriate flagship based on toggle state
+                                    const regularFlagship = seriesData.find(g => g.flagship);
+                                    const specialFlagship = seriesData.find(g => g.specialFlagship);
+                                    const useSpecial = specialFlagshipActive[gpu.series] && specialFlagship;
+                                    flagshipModel = useSpecial ? specialFlagship.model : (regularFlagship ? regularFlagship.model : "Unknown flagship");
+                                }
+                                
+                                flagshipInfo = `Vs ${flagshipModel}: ${gpu.normalizedCores.toFixed(1)}%`;
+                            }
+                            
                             tooltipContent += `
                                 <div class="gpu-item">
                                     <span class="model-name">
@@ -668,7 +806,7 @@ function App() {
                                     </span>
                                     <div class="cores-info">
                                         Cores: ${gpu.cudaCores.toLocaleString()}<br>
-                                        ${toggleMode ? `Normalized: ${gpu.normalizedCores.toFixed(1)}%` : ''}
+                                        ${toggleMode ? flagshipInfo : ''}
                                     </div>
                                 </div>
                             `;
@@ -684,11 +822,29 @@ function App() {
                 });
         });
 
-    }, [toggleMode, gpuData, specialFlagshipActive, useLogScale, activeGenerations]); // Include activeGenerations in dependencies
+    }, [toggleMode, gpuData, specialFlagshipActive, useLogScale, activeGenerations, showAllCudaGenerations]); // Include showAllCudaGenerations in dependencies
 
     // New useEffect hook for VRAM chart
     useEffect(() => {
         if (!vramSvgRef.current) return; // Skip if ref isn't available
+        
+        // Create a tooltip container for the VRAM chart if it doesn't exist
+        if (!d3.select('body').select('.vram-tooltip-container').size()) {
+            d3.select('body')
+                .append('div')
+                .attr('class', 'vram-tooltip-container')
+                .style('position', 'absolute')
+                .style('visibility', 'hidden')
+                .style('background-color', 'rgba(30, 30, 30, 0.9)')
+                .style('color', '#fff')
+                .style('border-radius', '8px')
+                .style('padding', '10px')
+                .style('pointer-events', 'none')
+                .style('box-shadow', '0 2px 10px rgba(0, 0, 0, 0.3)')
+                .style('z-index', '10')
+                .style('max-width', '200px')
+                .style('font-size', '12px');
+        }
         
         const svg = d3.select(vramSvgRef.current);
         svg.selectAll("*").remove(); // Clear previous renders
@@ -719,7 +875,7 @@ function App() {
         const filteredData = gpuData.filter(d => {
             const tier = getTierFromModel(d.model);
             // Include if this class is selected or if we're showing all generations
-            return tier && (selectedClasses[tier] || showAllGenerations);
+            return tier && (tier === "90" || selectedClasses[tier] || showAllGenerations);
         });
 
         // Determine if we have data to display
@@ -827,6 +983,9 @@ function App() {
         if (hasData) {
             // Only draw data points and lines when we have data
             
+            // Create a color scale for GPU classes instead of generations
+            const classColorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(columnOrder);
+            
             // Group data by GPU class
             const groupedByClass = {};
             columnOrder.forEach(gpuClass => {
@@ -848,17 +1007,17 @@ function App() {
                     .x(d => xScale(d.releaseYear))
                     .y(d => yScale(d.vram));
                     
-                // Draw line
+                // Draw line with class color instead of gray
                 chartGroup.append('path')
                     .datum(gpusInClass)
                     .attr('class', 'series-line')
                     .attr('fill', 'none')
-                    .attr('stroke', '#888') // Gray line for all classes
+                    .attr('stroke', classColorScale(gpuClass)) // Use class color for dashed lines
                     .attr('stroke-width', 1.5)
                     .attr('stroke-dasharray', '3,3') // Dashed lines
                     .attr('d', line);
                     
-                // Draw points
+                // Draw points with enhanced hover functionality
                 chartGroup.selectAll(`.vram-dot-${gpuClass.replace(/\s+/g, '-')}`) // Sanitize class name
                     .data(gpusInClass)
                     .enter().append('circle')
@@ -866,52 +1025,44 @@ function App() {
                     .attr('cx', d => xScale(d.releaseYear))
                     .attr('cy', d => yScale(d.vram))
                     .attr('r', 4) 
-                    .attr('fill', d => colorScale(d.series))
+                    .attr('fill', classColorScale(gpuClass)) // Use class color for dots
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 0.5)
-                    .append('title') // Tooltip
-                    .text(d => `${d.model} (${d.series}) - ${d.releaseYear}\nVRAM: ${d.vram} GB`);
-            });
-
-            // Group data by series for generation lines
-            const seriesData = {};
-            generations.forEach(series => {
-                const gpusInSeries = filteredData.filter(d => d.series === series);
-                if (gpusInSeries.length > 0) {
-                    seriesData[series] = gpusInSeries;
-                }
-            });
-
-            // Draw lines connecting GPUs of the same series/generation
-            Object.entries(seriesData).forEach(([series, gpusInSeries]) => {
-                // Skip this generation if it's set to inactive
-                if (vramActiveGenerations[series] === false) return;
-                
-                // Sort by class tier for proper line connection
-                gpusInSeries.sort((a, b) => {
-                    const tierA = getTierFromModel(a.model);
-                    const tierB = getTierFromModel(b.model);
-                    if (!tierA || !tierB) return 0;
-                    
-                    const indexA = columnOrder.indexOf(tierA);
-                    const indexB = columnOrder.indexOf(tierB);
-                    return indexA - indexB;
-                });
-                
-                // Line generator
-                const line = d3.line()
-                    .defined(d => d.vram != null) // Ensure point has VRAM data
-                    .x(d => xScale(d.releaseYear))
-                    .y(d => yScale(d.vram));
-                    
-                // Draw line
-                chartGroup.append('path')
-                    .datum(gpusInSeries)
-                    .attr('class', 'generation-line')
-                    .attr('fill', 'none')
-                    .attr('stroke', colorScale(series))
-                    .attr('stroke-width', 2.5)
-                    .attr('d', line);
+                    .on('mouseover', function(event, d) {
+                        // Show and position tooltip
+                        d3.select('.vram-tooltip-container')
+                            .style('visibility', 'visible')
+                            .style('left', `${event.pageX + 15}px`)
+                            .style('top', `${event.pageY - 10}px`);
+                        
+                        // Create tooltip content
+                        const tooltipContent = `
+                            <div class="tooltip-title">${d.model}</div>
+                            <div class="tooltip-info">
+                                <strong>Series:</strong> ${d.series} series<br>
+                                <strong>VRAM:</strong> ${d.vram} GB<br>
+                                <strong>Year:</strong> ${d.releaseYear}<br>
+                                <strong>CUDA Cores:</strong> ${d.cudaCores.toLocaleString()}
+                            </div>
+                        `;
+                        
+                        d3.select('.vram-tooltip-container').html(tooltipContent);
+                        
+                        // Highlight the point
+                        d3.select(this)
+                            .attr('r', 6)
+                            .attr('stroke-width', 2);
+                    })
+                    .on('mouseout', function() {
+                        // Hide tooltip
+                        d3.select('.vram-tooltip-container')
+                            .style('visibility', 'hidden');
+                        
+                        // Return point to normal size
+                        d3.select(this)
+                            .attr('r', 4)
+                            .attr('stroke-width', 0.5);
+                    });
             });
         } // Close the hasData block
         
@@ -930,6 +1081,9 @@ function App() {
             .attr("text-anchor", "middle") // Center the text
             .text("GPU Classes");
 
+        // Create a color scale for GPU classes (defined outside the conditionals so it's available for legend)
+        const classColorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(columnOrder);
+            
         // Create legend items with checkboxes for each GPU class
         const legendItems = vramLegend.selectAll(".legend-item")
             .data(columnOrder)
@@ -944,23 +1098,32 @@ function App() {
             .attr("width", 15)
             .attr("height", 15)
             .attr("stroke", "#ddd")
-            .attr("fill", d => selectedClasses[d] ? "#646cff" : "#555") // Use grey for inactive
+            .attr("fill", d => selectedClasses[d] ? classColorScale(d) : "#555") // Use class-specific color when active
             .attr("rx", 3)
             .attr("ry", 3)
             .attr("cursor", "pointer")
             .attr("opacity", d => selectedClasses[d] ? 1 : 0.5) // Dim inactive classes
             .attr("class", "class-checkbox")
             .on("click", function(event, d) {
-                // Toggle the checkbox state
-                setSelectedClasses(prev => ({
-                    ...prev,
-                    [d]: !prev[d]
-                }));
-                
-                // If we're showing all generations, switch to selective mode
-                if (showAllGenerations) {
-                    setShowAllGenerations(false);
-                }
+                setSelectedClasses(prev => {
+                    const newState = {
+                        ...prev,
+                        [d]: !prev[d]
+                    };
+                    
+                    // If we're deselecting a class and "Show All" is active, uncheck "Show All"
+                    if (prev[d] && showAllGenerations) {
+                        setShowAllGenerations(false);
+                    }
+                    
+                    // If all classes become selected, check "Show All"
+                    const allSelected = Object.values(newState).every(value => value === true);
+                    if (allSelected) {
+                        setShowAllGenerations(true);
+                    }
+                    
+                    return newState;
+                });
             });
             
         // Label for each GPU class with toggle functionality
@@ -1001,7 +1164,37 @@ function App() {
             .attr("ry", 3)
             .attr("cursor", "pointer")
             .on("click", function() {
-                setShowAllGenerations(prev => !prev);
+                // Check if we're currently showing all
+                if (showAllGenerations) {
+                    // If already showing all, switch to hiding all
+                    const allFalse = {};
+                    columnOrder.forEach(cls => {
+                        allFalse[cls] = false;
+                    });
+                    setSelectedClasses(allFalse);
+                    setShowAllGenerations(false); // Uncheck "Show All"
+                } else {
+                    // If not showing all, check if all are currently hidden
+                    const allHidden = Object.values(selectedClasses).every(value => value === false);
+                    
+                    if (allHidden) {
+                        // If all are hidden, show all
+                        const allTrue = {};
+                        columnOrder.forEach(cls => {
+                            allTrue[cls] = true;
+                        });
+                        setSelectedClasses(allTrue);
+                        setShowAllGenerations(true); // Check "Show All"
+                    } else {
+                        // Otherwise, show all
+                        const allTrue = {};
+                        columnOrder.forEach(cls => {
+                            allTrue[cls] = true;
+                        });
+                        setSelectedClasses(allTrue);
+                        setShowAllGenerations(true); // Check "Show All"
+                    }
+                }
             });
             
         showAllGroup.append("text")
@@ -1012,20 +1205,13 @@ function App() {
             .text("Show All Classes")
             .attr("alignment-baseline", "middle");
         
-        // Add subtitle explaining line colors
-        vramLegend.append("text")
-            .attr("x", 0)
-            .attr("y", columnOrder.length * 25 + 45)
-            .attr("fill", "#aaa")
-            .style("font-size", "11px")
-            .text("* Lines connect same generation");
-            
+        // Add subtitle explaining line colors           
         vramLegend.append("text")
             .attr("x", 0)
             .attr("y", columnOrder.length * 25 + 65)
             .attr("fill", "#aaa")
             .style("font-size", "11px")
-            .text("* Colors represent GPU series");
+            .text("* Colors represent GPU classes");
         
     }, [gpuData, selectedClasses, showAllGenerations, vramActiveGenerations]); // Dependencies for VRAM chart
 
