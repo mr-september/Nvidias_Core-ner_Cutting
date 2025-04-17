@@ -394,6 +394,15 @@ function App() {
         const legend = chartGroup.append("g")
             .attr("class", "legend")
             .attr("transform", `translate(${width + 20}, 0)`); // Position legend to the right
+            
+        // Add "GPU Generation" title to legend
+        legend.append("text")
+            .attr("x", 0)
+            .attr("y", -20)
+            .attr("font-size", "14px")
+            .attr("font-weight", "bold")
+            .attr("fill", "#ddd")
+            .text("GPU Generation");
 
         // Collect flagship info for each generation
         const generationInfo = generations.map(series => {
@@ -437,6 +446,18 @@ function App() {
             .attr("x", 20)
             .attr("y", 27) // Position below the series name
             .text(d => {
+                // Special case for 1600 series - use 2080 Ti as flagship
+                if (d.series === "1600") {
+                    // Find the 2000 series flagship
+                    const series2000Data = gpuData.filter(gpu => gpu.series === "2000");
+                    const flagship2000 = specialFlagshipActive["2000"] && series2000Data.find(gpu => gpu.specialFlagship) 
+                        ? series2000Data.find(gpu => gpu.specialFlagship) 
+                        : series2000Data.find(gpu => gpu.flagship);
+                    
+                    return flagship2000 ? `Flagship: ${flagship2000.model}` : "No flagship";
+                }
+                
+                // Normal case for other series
                 const flagshipToShow = specialFlagshipActive[d.series] && d.specialFlagship ? d.specialFlagship : d.regularFlagship;
                 return flagshipToShow ? `Flagship: ${flagshipToShow.model}` : "No flagship";
             })

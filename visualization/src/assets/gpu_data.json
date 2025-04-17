@@ -223,7 +223,7 @@
     "specialFlagship": false
   },
   {
-    "series": "10",
+    "series": "1000",
     "model": "GT 1030",
     "cudaCores": 384,
     "vram": 2,
