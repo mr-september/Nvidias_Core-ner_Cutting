@@ -722,30 +722,24 @@ function App() {
             return tier && (selectedClasses[tier] || showAllGenerations);
         });
 
-        if (filteredData.length === 0) {
-            // No data to display
-            chartGroup.append("text")
-                .attr("x", width / 2)
-                .attr("y", height / 2)
-                .attr("text-anchor", "middle")
-                .attr("fill", "#ddd")
-                .style("font-size", "14px")
-                .text("No data to display. Please select at least one GPU class.");
-            return;
-        }
+        // Determine if we have data to display
+        const hasData = filteredData.length > 0;
 
         // --- Scales ---
-        // X scale for years
-        const years = Array.from(new Set(filteredData.map(d => d.releaseYear))).sort();
+        // X scale for years - use all years if no data is available
+        const years = hasData 
+            ? Array.from(new Set(filteredData.map(d => d.releaseYear))).sort()
+            : Array.from(new Set(gpuData.map(d => d.releaseYear))).sort();
         const xScale = d3.scalePoint()
             .domain(years)
             .range([0, width])
             .padding(0.5);
 
         // Y scale for VRAM
-        const maxVram = d3.max(filteredData, d => d.vram);
+        // Use a default max value if no data is available
+        const maxVram = hasData ? d3.max(filteredData, d => d.vram) : d3.max(gpuData, d => d.vram);
         // Round up to nice value for y-axis
-        const yMaxVram = Math.ceil(maxVram / 5) * 5;
+        const yMaxVram = Math.ceil(maxVram / 5) * 5 || 25; // Default to 25 GB if no data
         
         const yScale = d3.scaleLinear()
             .domain([0, yMaxVram])
@@ -818,94 +812,110 @@ function App() {
                 .attr("stroke-opacity", 0.7);
         chartGroup.select(".grid .domain").remove();
         
-        // Group data by GPU class
-        const groupedByClass = {};
-        columnOrder.forEach(gpuClass => {
-            if (selectedClasses[gpuClass] || showAllGenerations) {
-                const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
-                
-                if (gpusInClass.length > 0) {
-                    groupedByClass[gpuClass] = gpusInClass
-                        .sort((a, b) => a.releaseYear - b.releaseYear);
-                }
-            }
-        });
-
-        // Draw lines for each GPU class
-        Object.entries(groupedByClass).forEach(([gpuClass, gpusInClass]) => {
-            // Line generator
-            const line = d3.line()
-                .defined(d => d.vram != null) // Ensure point has VRAM data
-                .x(d => xScale(d.releaseYear))
-                .y(d => yScale(d.vram));
-                
-            // Draw line
-            chartGroup.append('path')
-                .datum(gpusInClass)
-                .attr('class', 'series-line')
-                .attr('fill', 'none')
-                .attr('stroke', '#888') // Gray line for all classes
-                .attr('stroke-width', 1.5)
-                .attr('stroke-dasharray', '3,3') // Dashed lines
-                .attr('d', line);
-                
-            // Draw points
-            chartGroup.selectAll(`.vram-dot-${gpuClass.replace(/\s+/g, '-')}`) // Sanitize class name
-                .data(gpusInClass)
-                .enter().append('circle')
-                .attr('class', `vram-dot vram-dot-${gpuClass.replace(/\s+/g, '-')}`)
-                .attr('cx', d => xScale(d.releaseYear))
-                .attr('cy', d => yScale(d.vram))
-                .attr('r', 4) 
-                .attr('fill', d => colorScale(d.series))
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 0.5)
-                .append('title') // Tooltip
-                .text(d => `${d.model} (${d.series}) - ${d.releaseYear}\nVRAM: ${d.vram} GB`);
-        });
-
-        // Group data by series for generation lines
-        const seriesData = {};
-        generations.forEach(series => {
-            const gpusInSeries = filteredData.filter(d => d.series === series);
-            if (gpusInSeries.length > 0) {
-                seriesData[series] = gpusInSeries;
-            }
-        });
-
-        // Draw lines connecting GPUs of the same series/generation
-        Object.entries(seriesData).forEach(([series, gpusInSeries]) => {
-            // Skip this generation if it's set to inactive
-            if (vramActiveGenerations[series] === false) return;
-            
-            // Sort by class tier for proper line connection
-            gpusInSeries.sort((a, b) => {
-                const tierA = getTierFromModel(a.model);
-                const tierB = getTierFromModel(b.model);
-                if (!tierA || !tierB) return 0;
-                
-                const indexA = columnOrder.indexOf(tierA);
-                const indexB = columnOrder.indexOf(tierB);
-                return indexA - indexB;
-            });
-            
-            // Line generator
-            const line = d3.line()
-                .defined(d => d.vram != null) // Ensure point has VRAM data
-                .x(d => xScale(d.releaseYear))
-                .y(d => yScale(d.vram));
-                
-            // Draw line
-            chartGroup.append('path')
-                .datum(gpusInSeries)
-                .attr('class', 'generation-line')
-                .attr('fill', 'none')
-                .attr('stroke', colorScale(series))
-                .attr('stroke-width', 2.5)
-                .attr('d', line);
-        });
+        // Display "No data" message if no data is available but keep the chart structure
+        if (!hasData) {
+            // Add a message in the chart area
+            chartGroup.append("text")
+                .attr("x", width / 2)
+                .attr("y", height / 2)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#ddd")
+                .style("font-size", "14px")
+                .text("No data to display. Please select at least one GPU class.");
+        }
         
-        // Add legend for VRAM chart with checkboxes
+        if (hasData) {
+            // Only draw data points and lines when we have data
+            
+            // Group data by GPU class
+            const groupedByClass = {};
+            columnOrder.forEach(gpuClass => {
+                if (selectedClasses[gpuClass] || showAllGenerations) {
+                    const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
+                    
+                    if (gpusInClass.length > 0) {
+                        groupedByClass[gpuClass] = gpusInClass
+                            .sort((a, b) => a.releaseYear - b.releaseYear);
+                    }
+                }
+            });
+
+            // Draw lines for each GPU class
+            Object.entries(groupedByClass).forEach(([gpuClass, gpusInClass]) => {
+                // Line generator
+                const line = d3.line()
+                    .defined(d => d.vram != null) // Ensure point has VRAM data
+                    .x(d => xScale(d.releaseYear))
+                    .y(d => yScale(d.vram));
+                    
+                // Draw line
+                chartGroup.append('path')
+                    .datum(gpusInClass)
+                    .attr('class', 'series-line')
+                    .attr('fill', 'none')
+                    .attr('stroke', '#888') // Gray line for all classes
+                    .attr('stroke-width', 1.5)
+                    .attr('stroke-dasharray', '3,3') // Dashed lines
+                    .attr('d', line);
+                    
+                // Draw points
+                chartGroup.selectAll(`.vram-dot-${gpuClass.replace(/\s+/g, '-')}`) // Sanitize class name
+                    .data(gpusInClass)
+                    .enter().append('circle')
+                    .attr('class', `vram-dot vram-dot-${gpuClass.replace(/\s+/g, '-')}`)
+                    .attr('cx', d => xScale(d.releaseYear))
+                    .attr('cy', d => yScale(d.vram))
+                    .attr('r', 4) 
+                    .attr('fill', d => colorScale(d.series))
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 0.5)
+                    .append('title') // Tooltip
+                    .text(d => `${d.model} (${d.series}) - ${d.releaseYear}\nVRAM: ${d.vram} GB`);
+            });
+
+            // Group data by series for generation lines
+            const seriesData = {};
+            generations.forEach(series => {
+                const gpusInSeries = filteredData.filter(d => d.series === series);
+                if (gpusInSeries.length > 0) {
+                    seriesData[series] = gpusInSeries;
+                }
+            });
+
+            // Draw lines connecting GPUs of the same series/generation
+            Object.entries(seriesData).forEach(([series, gpusInSeries]) => {
+                // Skip this generation if it's set to inactive
+                if (vramActiveGenerations[series] === false) return;
+                
+                // Sort by class tier for proper line connection
+                gpusInSeries.sort((a, b) => {
+                    const tierA = getTierFromModel(a.model);
+                    const tierB = getTierFromModel(b.model);
+                    if (!tierA || !tierB) return 0;
+                    
+                    const indexA = columnOrder.indexOf(tierA);
+                    const indexB = columnOrder.indexOf(tierB);
+                    return indexA - indexB;
+                });
+                
+                // Line generator
+                const line = d3.line()
+                    .defined(d => d.vram != null) // Ensure point has VRAM data
+                    .x(d => xScale(d.releaseYear))
+                    .y(d => yScale(d.vram));
+                    
+                // Draw line
+                chartGroup.append('path')
+                    .datum(gpusInSeries)
+                    .attr('class', 'generation-line')
+                    .attr('fill', 'none')
+                    .attr('stroke', colorScale(series))
+                    .attr('stroke-width', 2.5)
+                    .attr('d', line);
+            });
+        } // Close the hasData block
+        
+        // Add legend for VRAM chart with checkboxes - always show this regardless of data
         const vramLegend = chartGroup.append("g")
             .attr("class", "vram-legend")
             .attr("transform", `translate(${width + 20}, 0)`); // Position legend to the right
