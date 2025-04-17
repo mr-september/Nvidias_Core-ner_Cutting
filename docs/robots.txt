@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mr-september.github.io/Nvidias_Core-ner_Cutting/sitemap.xml
