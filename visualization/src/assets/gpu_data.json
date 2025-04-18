@@ -463,7 +463,7 @@
     "series": "4000",
     "model": "RTX 4060 Ti",
     "cudaCores": 4352,
-    "vram": 8,
+    "vram": 16,
     "releaseYear": 2023,
     "flagship": false
   },
@@ -508,7 +508,7 @@
     "series": "5000",
     "model": "RTX 5060 Ti",
     "cudaCores": 4608,
-    "vram": 8,
+    "vram": 16,
     "flagship": false
   },
   {
