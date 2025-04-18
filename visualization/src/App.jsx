@@ -1219,7 +1219,10 @@ function App() {
         <div className="App">
             <h1 style={{ textAlign: 'center', margin: '20px 0' }}>Nvidia's Core-ner Cutting</h1>
             <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
-                This visualization tracks NVIDIA's CUDA core counts across GPU generations, tracking how lower-tier cards receive proportionally fewer cores over time compared to flagship models. This is an open-source project. Please feel free to have a look at the source code and contribute!
+                This visualization tracks NVIDIA's CUDA core counts across GPU generations, tracking how lower-tier cards receive proportionally fewer cores over time compared to flagship models. Use the checkboxes in the legend to select which GPU classes to display. This is an open-source project. Please feel free to have a look at the source code and contribute!
+            </p>
+            <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
+                This is an open-source project. Please feel free to have a look at the source code and contribute!
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', margin: '10px auto' }}>
                 <button
@@ -1267,7 +1270,7 @@ function App() {
             {/* CUDA cores chart */}
             <svg ref={svgRef} style={{ display: 'block', margin: '20px auto' }}></svg>
             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
-                * I typically define special flagships as those that launch 1-2 years after the original flagship. 780 Ti is an exception where it launched only 6 months after the 780. But hey, you have the power to decide which to use.
+                * Special flagships are defined as those that launch 1-2 years after the original flagship. 780 Ti is an exception where it launched only 6 months after the 780. But hey, you have the power to decide which to use.
             </p>
             
             {/* VRAM chart section */}
@@ -1279,10 +1282,6 @@ function App() {
                 
                 {/* VRAM chart */}
                 <svg ref={vramSvgRef} style={{ display: 'block', margin: '20px auto' }}></svg>
-                
-                <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
-                    * Colored lines represent GPUs from the same series, while the dashed gray lines connect the same GPU class across generations.
-                </p>
             </div>
         </div>
     );
