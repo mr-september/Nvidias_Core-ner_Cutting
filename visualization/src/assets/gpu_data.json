@@ -592,7 +592,7 @@
     "flagship": true,
     "msrp": 1599,
     "dieName": "AD102",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "4000",
@@ -603,7 +603,7 @@
     "flagship": false,
     "msrp": 1199,
     "dieName": "AD103",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "4000",
@@ -614,7 +614,7 @@
     "flagship": false,
     "msrp": 799,
     "dieName": "AD104",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "4000",
@@ -625,7 +625,7 @@
     "flagship": false,
     "msrp": 599,
     "dieName": "AD104",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "4000",
@@ -636,7 +636,7 @@
     "flagship": false,
     "msrp": 499,
     "dieName": "AD106",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "4000",
@@ -647,7 +647,7 @@
     "flagship": false,
     "msrp": 299,
     "dieName": "AD107",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
