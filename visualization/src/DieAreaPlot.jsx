@@ -216,7 +216,7 @@ function DieAreaPlot({
         // Find maximum price per mm²
         const maxPricePerMM2 = max(processedData, d => d.pricePerMM2) || 5;
         // Round up to a nice value, ensuring it's at least 5
-        const yMax = Math.max(5, Math.ceil(maxPricePerMM2 * 1.1)); // Give some padding
+        const yMax = Math.max(4, Math.ceil(maxPricePerMM2 * 1.1)); // Give some padding
 
         // Y scale for price per mm²
         const yScale = d3.scaleLinear()
@@ -984,16 +984,16 @@ function DieAreaPlot({
                          .attr('stroke-width', 2)
                          .attr('opacity', 1); // Ensure full opacity when hovered
                  })
-                 .on('mouseout', function() {
+                 .on('mouseout', function(event, d) {
                      // Hide tooltip
                      d3.select(`.${tooltipContainerClass}`)
                          .style('visibility', 'hidden');
 
-                     // Return point to normal size
+                     // Return point to its proper scaled size based on die area
                      d3.select(this)
-                         .attr('r', 4)
+                         .attr('r', d => radiusScale(d.dieSizeMM2))
                          .attr('stroke-width', 0.5)
-                         .attr('opacity', 1); // Return to default non-hover opacity (could also fade slightly if desired)
+                         .attr('opacity', 1); // Return to default non-hover opacity
                  });
         }
 

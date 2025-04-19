@@ -133,7 +133,7 @@ svg {
 
 /* --- Legend Styling --- */
 .legend text {
-  font-size: 12px;
+  font-size: 14px;
   fill: #ddd; /* Light text for legend */
   dominant-baseline: middle; /* Fixed from alignment-baseline */
 }

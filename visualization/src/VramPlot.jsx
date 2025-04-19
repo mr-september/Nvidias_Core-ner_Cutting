@@ -876,7 +876,7 @@ function VramPlot({
             .attr("class", "memory-slider-group");
 
         const trackY = 50; // Define vertical starting point for the track
-        const sliderHeight = 180;
+        const sliderHeight = 215;
         const sliderWidth = 14;
         const sliderX = 35 - (sliderWidth / 2); // Center the slider track horizontally (x=28)
 
