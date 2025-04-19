@@ -116,11 +116,13 @@ function CudaPlot({
         // Sort generations by year first, then by series number (ascending for same year)
         const generationsWithInfo = Array.from(new Set(gpuData.map(d => d.series)))
             .map(series => {
-                // Find the first card of this series to get its release year
-                const firstCard = gpuData.find(d => d.series === series);
+                // Find the earliest card of this series to get its first release year
+                const seriesCards = gpuData.filter(d => d.series === series);
+                const earliestYear = seriesCards.length > 0 ? 
+                    Math.min(...seriesCards.map(card => card.releaseYear)) : 0;
                 return {
                     series,
-                    releaseYear: firstCard ? firstCard.releaseYear : 0,
+                    releaseYear: earliestYear, // Use earliest release year in the series
                     seriesNum: parseInt(series, 10) || 0
                 };
             })

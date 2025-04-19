@@ -225,93 +225,8 @@ function VramPlot({
                 .text("No data to display based on current filters.");
         }
 
-        if (hasData) {
-            // Only draw GPU data points and lines when we have GPU data
-
-            // Create a color scale for GPU classes instead of generations
-            const classColorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(columnOrder);
-
-            // Group data by GPU class
-            const groupedByClass = {};
-            columnOrder.forEach(gpuClass => {
-                 // Ensure the class is selected or showAll is true AND there are GPUs in this class in the filteredData
-                 const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
-
-                 if ((selectedClasses[gpuClass] || showAllGenerations) && gpusInClass.length > 0) {
-                     groupedByClass[gpuClass] = gpusInClass
-                         .sort((a, b) => a.releaseYear - b.releaseYear);
-                 }
-            });
-
-
-            // Draw lines for each GPU class
-            Object.entries(groupedByClass).forEach(([gpuClass, gpusInClass]) => {
-                // Line generator
-                const line = d3.line()
-                    .defined(d => d.vram != null && d.vram > 0 && xScale(d.releaseYear) !== undefined && yScale(d.vram) !== undefined) // Ensure valid data and scale mapping
-                    .x(d => xScale(d.releaseYear))
-                    .y(d => yScale(d.vram));
-
-                // Draw line with class color instead of gray
-                chartGroup.append('path')
-                    .datum(gpusInClass)
-                    .attr('class', 'series-line')
-                    .attr('fill', 'none')
-                    .attr('stroke', classColorScale(gpuClass)) // Use class color for dashed lines
-                    .attr('stroke-width', 1.5)
-                    .attr('stroke-dasharray', '3,3') // Dashed lines
-                    .attr('d', line);
-
-                // Draw points with enhanced hover functionality
-                chartGroup.selectAll(`.vram-dot-${gpuClass.replace(/\s+/g, '-')}`) // Sanitize class name
-                    .data(gpusInClass.filter(d => d.vram != null && d.vram > 0)) // Filter again for points
-                    .enter().append('circle')
-                    .attr('class', `vram-dot vram-dot-${gpuClass.replace(/\s+/g, '-')}`)
-                    .attr('cx', d => xScale(d.releaseYear))
-                    .attr('cy', d => yScale(d.vram))
-                    .attr('r', 4)
-                    .attr('fill', classColorScale(gpuClass)) // Use class color for dots
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 0.5)
-                    .on('mouseover', function(event, d) {
-                        // Show and position tooltip
-                        d3.select('.vram-tooltip-container')
-                            .style('visibility', 'visible')
-                            .style('left', `${event.pageX + 15}px`)
-                            .style('top', `${event.pageY - 10}px`);
-
-                        // Create tooltip content
-                        const tooltipContent = `
-                            <div class="tooltip-title" style="color: ${classColorScale(getTierFromModel(d.model))};">${d.model}</div>
-                            <div class="tooltip-info">
-                                <strong>Series:</strong> ${d.series} series<br>
-                                <strong>VRAM:</strong> ${d.vram} GB<br>
-                                <strong>Year:</strong> ${d.releaseYear}<br>
-                                <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'}
-                            </div>
-                        `;
-
-                        d3.select('.vram-tooltip-container').html(tooltipContent);
-
-                        // Highlight the point
-                        d3.select(this)
-                            .attr('r', 6)
-                            .attr('stroke-width', 2);
-                    })
-                    .on('mouseout', function() {
-                        // Hide tooltip
-                        d3.select('.vram-tooltip-container')
-                            .style('visibility', 'hidden');
-
-                        // Return point to normal size
-                        d3.select(this)
-                            .attr('r', 4)
-                            .attr('stroke-width', 0.5);
-                    });
-            });
-        } // Close the hasData block
-
         // --- Console Data Visualization ---
+        // Draw console backgrounds first so they appear underneath the GPU data points
         if (showConsoleData && filteredConsoleData.length > 0) {
             // Define base colors for platforms with additional variant for same-year launches
             const platformColors = {
@@ -593,7 +508,93 @@ function VramPlot({
             });
         } // Close the showConsoleData block
 
+        if (hasData) {
+            // Only draw GPU data points and lines when we have GPU data
 
+            // Create a color scale for GPU classes instead of generations
+            const classColorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(columnOrder);
+
+            // Group data by GPU class
+            const groupedByClass = {};
+            columnOrder.forEach(gpuClass => {
+                 // Ensure the class is selected or showAll is true AND there are GPUs in this class in the filteredData
+                 const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
+
+                 if ((selectedClasses[gpuClass] || showAllGenerations) && gpusInClass.length > 0) {
+                     groupedByClass[gpuClass] = gpusInClass
+                         .sort((a, b) => a.releaseYear - b.releaseYear);
+                 }
+            });
+
+
+            // Draw lines for each GPU class
+            Object.entries(groupedByClass).forEach(([gpuClass, gpusInClass]) => {
+                // Line generator
+                const line = d3.line()
+                    .defined(d => d.vram != null && d.vram > 0 && xScale(d.releaseYear) !== undefined && yScale(d.vram) !== undefined) // Ensure valid data and scale mapping
+                    .x(d => xScale(d.releaseYear))
+                    .y(d => yScale(d.vram));
+
+                // Draw line with class color instead of gray
+                chartGroup.append('path')
+                    .datum(gpusInClass)
+                    .attr('class', 'series-line')
+                    .attr('fill', 'none')
+                    .attr('stroke', classColorScale(gpuClass)) // Use class color for dashed lines
+                    .attr('stroke-width', 1.5)
+                    .attr('stroke-dasharray', '3,3') // Dashed lines
+                    .attr('d', line);
+
+                // Draw points with enhanced hover functionality
+                chartGroup.selectAll(`.vram-dot-${gpuClass.replace(/\s+/g, '-')}`) // Sanitize class name
+                    .data(gpusInClass.filter(d => d.vram != null && d.vram > 0)) // Filter again for points
+                    .enter().append('circle')
+                    .attr('class', `vram-dot vram-dot-${gpuClass.replace(/\s+/g, '-')}`)
+                    .attr('cx', d => xScale(d.releaseYear))
+                    .attr('cy', d => yScale(d.vram))
+                    .attr('r', 4)
+                    .attr('fill', classColorScale(gpuClass)) // Use class color for dots
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 0.5)
+                    .on('mouseover', function(event, d) {
+                        // Show and position tooltip
+                        d3.select('.vram-tooltip-container')
+                            .style('visibility', 'visible')
+                            .style('left', `${event.pageX + 15}px`)
+                            .style('top', `${event.pageY - 10}px`);
+
+                        // Create tooltip content
+                        const tooltipContent = `
+                            <div class="tooltip-title" style="color: ${classColorScale(getTierFromModel(d.model))};">${d.model}</div>
+                            <div class="tooltip-info">
+                                <strong>Series:</strong> ${d.series} series<br>
+                                <strong>VRAM:</strong> ${d.vram} GB<br>
+                                <strong>Year:</strong> ${d.releaseYear}<br>
+                                <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'}
+                            </div>
+                        `;
+
+                        d3.select('.vram-tooltip-container').html(tooltipContent);
+
+                        // Highlight the point
+                        d3.select(this)
+                            .attr('r', 6)
+                            .attr('stroke-width', 2);
+                    })
+                    .on('mouseout', function() {
+                        // Hide tooltip
+                        d3.select('.vram-tooltip-container')
+                            .style('visibility', 'hidden');
+
+                        // Return point to normal size
+                        d3.select(this)
+                            .attr('r', 4)
+                            .attr('stroke-width', 0.5);
+                    });
+            });
+        } // Close the hasData block
+
+        // --- Legend and Controls ---
         // Add legend for VRAM chart with checkboxes - always show this regardless of data
         const vramLegend = chartGroup.append("g")
             .attr("class", "vram-legend")
@@ -656,7 +657,7 @@ function VramPlot({
                  }
             });
 
-        // Label for each GPU class with toggle functionality (Calls setSelectedClasses, setShowAllGenerations)
+        // Label for each GPU class with toggle functionality
         legendItems.append("text")
             .attr("x", 25)
             .attr("y", 12)

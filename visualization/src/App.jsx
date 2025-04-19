@@ -3,10 +3,12 @@ import * as d3 from 'd3'; // Keep D3 import here if needed elsewhere, though it'
 import './App.css';
 import gpuData from './assets/gpu_data.json';
 import consoleData from './assets/console_data.json';
+import gpuDieData from './assets/gpu_die.json';
 
-// Import the new components
+// Import the components
 import CudaPlot from './CudaPlot';
 import VramPlot from './VramPlot';
+import DieAreaPlot from './DieAreaPlot';
 
 
 // Define the order of GPU tiers for the X-axis - Keep in App as it's shared config
@@ -90,6 +92,10 @@ function App() {
 
     // State for memory allocation slider (percentage of unified memory used as VRAM)
     const [memoryAllocationPercentage, setMemoryAllocationPercentage] = useState(100);
+    
+    // State related to Die Area Price plot
+    const dieAreaSvgRef = useRef();
+    const [showAllDieGenerations, setShowAllDieGenerations] = useState(true);
 
      // Initialize activeGenerations state based on data the first time
      // This was originally inside the CUDA useEffect, now initialize here once
@@ -164,11 +170,14 @@ function App() {
         <div className="App">
             {/* CUDA Plot Section */}
             <h1 style={{ textAlign: 'center', margin: '20px 0' }}>Nvidia's Core-ner Cutting</h1>
+            <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
+                This is an open-source project. Please feel free to have a look at the source code and contribute!
+            </p>
+            <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
+                Each plot can have elements toggled on/off by click on the legend.
+            </p>
             <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
                 This visualization tracks NVIDIA's CUDA core counts across GPU generations, tracking how lower-tier cards receive proportionally fewer cores over time compared to flagship models.
-            </p>
-             <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
-                This is an open-source project. Please feel free to have a look at the source code and contribute!
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', margin: '10px auto' }}>
                 <button
@@ -237,14 +246,14 @@ function App() {
             />
 
             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
-                * Special flagships are defined as those that launch 1-2 years after the original flagship. 780 Ti is an exception where it launched only 6 months after the 780. But hey, you have the power to decide which to use.
+                Special flagships are defined as those that launch 1-2 years after the original flagship. 780 Ti is an exception where it launched only 6 months after the 780. But hey, you have the power to decide which to use.
             </p>
 
             {/* VRAM chart section */}
             <div className="vram-chart-section" style={{ marginTop: '80px', paddingTop: '20px', borderTop: '1px solid #444' }}>
                 <h2 style={{ textAlign: 'center', margin: '20px 0' }}>VRAM Evolution Over Time</h2>
                 <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
-                    This chart shows how video memory capacity has evolved over time across different GPU classes and consoles. Use the checkboxes in the legend to select which GPU classes to display. The slider adjusts the allocation of unified memory systems (like consoles and some laptop/APU architectures) between CPU and GPU, affecting the effective VRAM amount shown.
+                    This chart shows how video memory capacity has evolved over time across different GPU classes and consoles.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
                     {/* Render the VramPlot component */}
@@ -269,7 +278,36 @@ function App() {
             </div>
              {/* Notes for VRAM chart */}
              <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
-                * Console memory represents total system memory. Unified memory systems (PS4, Xbox One, and newer) dynamically allocate between CPU and GPU. The slider estimates VRAM based on this allocation percentage. Older consoles with dedicated VRAM are shown at their fixed amount regardless of slider position.
+                Console memory represents total system memory. Unified memory systems (PS4, Xbox One, and newer) dynamically allocate between CPU and GPU. The slider estimates VRAM based on this allocation percentage. Older consoles with dedicated VRAM are shown at their fixed amount regardless of slider position.
+            </p>
+             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
+                The xx60 class is the only class (so far) that had a regression in VRAM capacity.
+            </p>
+
+            {/* Die Area Price chart section */}
+            <div className="die-area-chart-section" style={{ marginTop: '80px', paddingTop: '20px', borderTop: '1px solid #444' }}>
+                <h2 style={{ textAlign: 'center', margin: '20px 0' }}>GPU Price per Die Area Over Time</h2>
+                <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 20px', color: '#ddd' }}>
+                    This chart shows the evolution of price (launch MSRP in USD) per die area ($/mm²) across GPU generations. Individual GPUs are plotted as scatter points and distributions as violin plots.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                    {/* Render the DieAreaPlot component */}
+                    <DieAreaPlot
+                        dieAreaSvgRef={dieAreaSvgRef}
+                        gpuData={gpuData}
+                        gpuDieData={gpuDieData}
+                        columnOrder={columnOrder}
+                        getTierFromModel={getTierFromModel}
+                        activeGenerations={activeGenerations}
+                        setActiveGenerations={setActiveGenerations}
+                        showAllDieGenerations={showAllDieGenerations}
+                        setShowAllDieGenerations={setShowAllDieGenerations}
+                    />
+                </div>
+            </div>
+            {/* Notes for Die Area chart */}
+            <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
+                Price per die area ($/mm²) tracks manufacturing efficiency and pricing strategy across GPU generations. Lower values may indicate better cost efficiency and/or competitive pricing.
             </p>
         </div>
     );

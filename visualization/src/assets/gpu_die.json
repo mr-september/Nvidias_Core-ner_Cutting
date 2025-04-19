@@ -151,27 +151,27 @@
   },
   "GB202": {
     "fullCudaCores": 21760,
-    "dieSizeMM2": null,
+    "dieSizeMM2": 750,
     "generation": "Blackwell" 
   },
   "GB203": {
     "fullCudaCores": 10752,
-    "dieSizeMM2": null,
+    "dieSizeMM2": 378,
     "generation": "Blackwell"
   },
   "GB205": {
     "fullCudaCores": 8960,
-    "dieSizeMM2": null,
+    "dieSizeMM2": 263,
     "generation": "Blackwell"
   },
   "GB206": {
     "fullCudaCores": 6144,
-    "dieSizeMM2": null,
+    "dieSizeMM2": 181,
     "generation": "Blackwell"
   },
   "GB207": {
     "fullCudaCores": 4608,
-    "dieSizeMM2": null,
+    "dieSizeMM2": 143,
     "generation": "Blackwell"
   }
 }
