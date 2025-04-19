@@ -6,7 +6,10 @@
     "vram": 3,
     "releaseYear": 2011,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 699,
+    "dieName": "2x GF110",
+    "manufacturingNode": 40
   },
   {
     "series": "500",
@@ -14,7 +17,10 @@
     "cudaCores": 512,
     "vram": 1.5,
     "releaseYear": 2010,
-    "flagship": true
+    "flagship": true,
+    "msrp": 499,
+    "dieName": "GF110",
+    "manufacturingNode": 40
   },
   {
     "series": "500",
@@ -22,7 +28,10 @@
     "cudaCores": 480,
     "vram": 1.25,
     "releaseYear": 2010,
-    "flagship": false
+    "flagship": false,
+    "msrp": 349,
+    "dieName": "GF110",
+    "manufacturingNode": 40
   },
   {
     "series": "500",
@@ -30,7 +39,10 @@
     "cudaCores": 384,
     "vram": 1,
     "releaseYear": 2011,
-    "flagship": false
+    "flagship": false,
+    "msrp": 249,
+    "dieName": "GF114",
+    "manufacturingNode": 40
   },
   {
     "series": "500",
@@ -38,7 +50,10 @@
     "cudaCores": 336,
     "vram": 1,
     "releaseYear": 2011,
-    "flagship": false
+    "flagship": false,
+    "msrp": 199,
+    "dieName": "GF114",
+    "manufacturingNode": 40
   },
   {
     "series": "500",
@@ -46,7 +61,10 @@
     "cudaCores": 192,
     "vram": 1,
     "releaseYear": 2011,
-    "flagship": false
+    "flagship": false,
+    "msrp": 149,
+    "dieName": "GF116",
+    "manufacturingNode": 40
   },
   {
     "series": "600",
@@ -55,7 +73,10 @@
     "vram": 4,
     "releaseYear": 2012,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 1000,
+    "dieName": "2x GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -63,7 +84,10 @@
     "cudaCores": 1536,
     "vram": 2,
     "releaseYear": 2012,
-    "flagship": true
+    "flagship": true,
+    "msrp": 500,
+    "dieName": "GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -71,7 +95,10 @@
     "cudaCores": 1344,
     "vram": 2,
     "releaseYear": 2012,
-    "flagship": false
+    "flagship": false,
+    "msrp": 400,
+    "dieName": "GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -79,7 +106,10 @@
     "cudaCores": 1344,
     "vram": 2,
     "releaseYear": 2012,
-    "flagship": false
+    "flagship": false,
+    "msrp": 300,
+    "dieName": "GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -87,7 +117,10 @@
     "cudaCores": 960,
     "vram": 2,
     "releaseYear": 2012,
-    "flagship": false
+    "flagship": false,
+    "msrp": 230,
+    "dieName": "GK106",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -95,7 +128,10 @@
     "cudaCores": 768,
     "vram": 1,
     "releaseYear": 2012,
-    "flagship": false
+    "flagship": false,
+    "msrp": 150,
+    "dieName": "GK106",
+    "manufacturingNode": 28
   },
   {
     "series": "600",
@@ -103,7 +139,10 @@
     "cudaCores": 384,
     "vram": 1,
     "releaseYear": 2012,
-    "flagship": false
+    "flagship": false,
+    "msrp": 110,
+    "dieName": "GK107",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -112,7 +151,10 @@
     "vram": 3,
     "releaseYear": 2013,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 699,
+    "dieName": "GK110",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -120,7 +162,10 @@
     "cudaCores": 2304,
     "vram": 3,
     "releaseYear": 2013,
-    "flagship": true
+    "flagship": true,
+    "msrp": 649,
+    "dieName": "GK110",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -128,7 +173,10 @@
     "cudaCores": 1536,
     "vram": 2,
     "releaseYear": 2013,
-    "flagship": false
+    "flagship": false,
+    "msrp": 399,
+    "dieName": "GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -136,7 +184,10 @@
     "cudaCores": 1152,
     "vram": 2,
     "releaseYear": 2013,
-    "flagship": false
+    "flagship": false,
+    "msrp": 249,
+    "dieName": "GK104",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -144,7 +195,10 @@
     "cudaCores": 640,
     "vram": 2,
     "releaseYear": 2014,
-    "flagship": false
+    "flagship": false,
+    "msrp": 149,
+    "dieName": "GM107",
+    "manufacturingNode": 28
   },
   {
     "series": "700",
@@ -152,7 +206,10 @@
     "cudaCores": 512,
     "vram": 1,
     "releaseYear": 2014,
-    "flagship": false
+    "flagship": false,
+    "msrp": 119,
+    "dieName": "GM107",
+    "manufacturingNode": 28
   },
   {
     "series": "900",
@@ -161,7 +218,10 @@
     "vram": 6,
     "releaseYear": 2015,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 649,
+    "dieName": "GM200",
+    "manufacturingNode": 28
   },
   {
     "series": "900",
@@ -169,7 +229,10 @@
     "cudaCores": 2048,
     "vram": 4,
     "releaseYear": 2014,
-    "flagship": true
+    "flagship": true,
+    "msrp": 549,
+    "dieName": "GM204",
+    "manufacturingNode": 28
   },
   {
     "series": "900",
@@ -177,7 +240,10 @@
     "cudaCores": 1664,
     "vram": 4,
     "releaseYear": 2014,
-    "flagship": false
+    "flagship": false,
+    "msrp": 329,
+    "dieName": "GM204",
+    "manufacturingNode": 28
   },
   {
     "series": "900",
@@ -185,7 +251,10 @@
     "cudaCores": 1024,
     "vram": 2,
     "releaseYear": 2015,
-    "flagship": false
+    "flagship": false,
+    "msrp": 199,
+    "dieName": "GM206",
+    "manufacturingNode": 28
   },
   {
     "series": "900",
@@ -193,16 +262,22 @@
     "cudaCores": 768,
     "vram": 2,
     "releaseYear": 2015,
-    "flagship": false
+    "flagship": false,
+    "msrp": 159,
+    "dieName": "GM206",
+    "manufacturingNode": 28
   },
-    {
+  {
     "series": "500",
     "model": "GT 530",
     "cudaCores": 96,
     "vram": 2,
     "releaseYear": 2011,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": null,
+    "dieName": "GF108",
+    "manufacturingNode": 40
   },
   {
     "series": "600",
@@ -211,7 +286,10 @@
     "vram": 2,
     "releaseYear": 2012,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": 60,
+    "dieName": "GF108",
+    "manufacturingNode": 40
   },
   {
     "series": "700",
@@ -220,7 +298,10 @@
     "vram": 2,
     "releaseYear": 2014,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": 70,
+    "dieName": "GK208",
+    "manufacturingNode": 28
   },
   {
     "series": "1000",
@@ -229,7 +310,10 @@
     "vram": 2,
     "releaseYear": 2017,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": 70,
+    "dieName": "GP108",
+    "manufacturingNode": 14
   },
   {
     "series": "1600",
@@ -238,7 +322,10 @@
     "vram": 4,
     "releaseYear": 2022,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": 150,
+    "dieName": "TU117",
+    "manufacturingNode": 12
   },
   {
     "series": "1000",
@@ -247,7 +334,10 @@
     "vram": 11,
     "releaseYear": 2017,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 699,
+    "dieName": "GP102",
+    "manufacturingNode": 16
   },
   {
     "series": "1600",
@@ -255,7 +345,10 @@
     "cudaCores": 896,
     "vram": 4,
     "releaseYear": 2019,
-    "flagship": false
+    "flagship": false,
+    "msrp": 149,
+    "dieName": "TU117",
+    "manufacturingNode": 12
   },
   {
     "series": "1600",
@@ -263,7 +356,10 @@
     "cudaCores": 1408,
     "vram": 6,
     "releaseYear": 2019,
-    "flagship": false
+    "flagship": false,
+    "msrp": 219,
+    "dieName": "TU116",
+    "manufacturingNode": 12
   },
   {
     "series": "1600",
@@ -272,7 +368,10 @@
     "vram": 6,
     "releaseYear": 2019,
     "flagship": false,
-    "specialFlagship": false
+    "specialFlagship": false,
+    "msrp": 279,
+    "dieName": "TU116",
+    "manufacturingNode": 12
   },
   {
     "series": "1000",
@@ -280,7 +379,10 @@
     "cudaCores": 2560,
     "vram": 8,
     "releaseYear": 2016,
-    "flagship": true
+    "flagship": true,
+    "msrp": 599,
+    "dieName": "GP104",
+    "manufacturingNode": 16
   },
   {
     "series": "1000",
@@ -288,7 +390,10 @@
     "cudaCores": 2432,
     "vram": 8,
     "releaseYear": 2017,
-    "flagship": false
+    "flagship": false,
+    "msrp": 449,
+    "dieName": "GP104",
+    "manufacturingNode": 16
   },
   {
     "series": "1000",
@@ -296,7 +401,10 @@
     "cudaCores": 1920,
     "vram": 8,
     "releaseYear": 2016,
-    "flagship": false
+    "flagship": false,
+    "msrp": 379,
+    "dieName": "GP104",
+    "manufacturingNode": 16
   },
   {
     "series": "1000",
@@ -304,7 +412,10 @@
     "cudaCores": 1280,
     "vram": 6,
     "releaseYear": 2016,
-    "flagship": false
+    "flagship": false,
+    "msrp": 299,
+    "dieName": "GP106",
+    "manufacturingNode": 16
   },
   {
     "series": "1000",
@@ -312,7 +423,10 @@
     "cudaCores": 768,
     "vram": 4,
     "releaseYear": 2016,
-    "flagship": false
+    "flagship": false,
+    "msrp": 139,
+    "dieName": "GP107",
+    "manufacturingNode": 14
   },
   {
     "series": "1000",
@@ -320,7 +434,10 @@
     "cudaCores": 640,
     "vram": 2,
     "releaseYear": 2016,
-    "flagship": false
+    "flagship": false,
+    "msrp": 109,
+    "dieName": "GP107",
+    "manufacturingNode": 14
   },
   {
     "series": "2000",
@@ -328,7 +445,10 @@
     "cudaCores": 4352,
     "vram": 11,
     "releaseYear": 2018,
-    "flagship": true
+    "flagship": true,
+    "msrp": 999,
+    "dieName": "TU102",
+    "manufacturingNode": 12
   },
   {
     "series": "2000",
@@ -336,7 +456,10 @@
     "cudaCores": 2944,
     "vram": 8,
     "releaseYear": 2018,
-    "flagship": false
+    "flagship": false,
+    "msrp": 699,
+    "dieName": "TU104",
+    "manufacturingNode": 12
   },
   {
     "series": "2000",
@@ -344,7 +467,10 @@
     "cudaCores": 2304,
     "vram": 8,
     "releaseYear": 2018,
-    "flagship": false
+    "flagship": false,
+    "msrp": 499,
+    "dieName": "TU106",
+    "manufacturingNode": 12
   },
   {
     "series": "2000",
@@ -352,7 +478,10 @@
     "cudaCores": 2176,
     "vram": 8,
     "releaseYear": 2019,
-    "flagship": false
+    "flagship": false,
+    "msrp": 399,
+    "dieName": "TU106",
+    "manufacturingNode": 12
   },
   {
     "series": "3000",
@@ -361,7 +490,10 @@
     "vram": 24,
     "releaseYear": 2022,
     "flagship": false,
-    "specialFlagship": true
+    "specialFlagship": true,
+    "msrp": 1999,
+    "dieName": "GA102",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -369,7 +501,10 @@
     "cudaCores": 10496,
     "vram": 24,
     "releaseYear": 2020,
-    "flagship": true
+    "flagship": true,
+    "msrp": 1499,
+    "dieName": "GA102",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -377,7 +512,10 @@
     "cudaCores": 10240,
     "vram": 12,
     "releaseYear": 2021,
-    "flagship": false    
+    "flagship": false,
+    "msrp": 1199,
+    "dieName": "GA102",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -385,7 +523,10 @@
     "cudaCores": 8704,
     "vram": 10,
     "releaseYear": 2020,
-    "flagship": false
+    "flagship": false,
+    "msrp": 699,
+    "dieName": "GA102",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -393,7 +534,10 @@
     "cudaCores": 6144,
     "vram": 8,
     "releaseYear": 2021,
-    "flagship": false
+    "flagship": false,
+    "msrp": 599,
+    "dieName": "GA104",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -401,7 +545,10 @@
     "cudaCores": 5888,
     "vram": 8,
     "releaseYear": 2020,
-    "flagship": false
+    "flagship": false,
+    "msrp": 499,
+    "dieName": "GA104",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -409,7 +556,10 @@
     "cudaCores": 4864,
     "vram": 8,
     "releaseYear": 2020,
-    "flagship": false
+    "flagship": false,
+    "msrp": 399,
+    "dieName": "GA104",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -417,7 +567,10 @@
     "cudaCores": 3584,
     "vram": 12,
     "releaseYear": 2021,
-    "flagship": false
+    "flagship": false,
+    "msrp": 329,
+    "dieName": "GA106",
+    "manufacturingNode": 8
   },
   {
     "series": "3000",
@@ -425,7 +578,10 @@
     "cudaCores": 2560,
     "vram": 8,
     "releaseYear": 2022,
-    "flagship": false
+    "flagship": false,
+    "msrp": 249,
+    "dieName": "GA106",
+    "manufacturingNode": 8
   },
   {
     "series": "4000",
@@ -433,7 +589,10 @@
     "cudaCores": 16384,
     "vram": 24,
     "releaseYear": 2022,
-    "flagship": true
+    "flagship": true,
+    "msrp": 1599,
+    "dieName": "AD102",
+    "manufacturingNode": 4
   },
   {
     "series": "4000",
@@ -441,7 +600,10 @@
     "cudaCores": 9728,
     "vram": 16,
     "releaseYear": 2022,
-    "flagship": false
+    "flagship": false,
+    "msrp": 1199,
+    "dieName": "AD103",
+    "manufacturingNode": 4
   },
   {
     "series": "4000",
@@ -449,7 +611,10 @@
     "cudaCores": 7680,
     "vram": 12,
     "releaseYear": 2023,
-    "flagship": false
+    "flagship": false,
+    "msrp": 799,
+    "dieName": "AD104",
+    "manufacturingNode": 4
   },
   {
     "series": "4000",
@@ -457,7 +622,10 @@
     "cudaCores": 5888,
     "vram": 12,
     "releaseYear": 2023,
-    "flagship": false
+    "flagship": false,
+    "msrp": 599,
+    "dieName": "AD104",
+    "manufacturingNode": 4
   },
   {
     "series": "4000",
@@ -465,7 +633,10 @@
     "cudaCores": 4352,
     "vram": 16,
     "releaseYear": 2023,
-    "flagship": false
+    "flagship": false,
+    "msrp": 499,
+    "dieName": "AD106",
+    "manufacturingNode": 4
   },
   {
     "series": "4000",
@@ -473,49 +644,76 @@
     "cudaCores": 3072,
     "vram": 8,
     "releaseYear": 2023,
-    "flagship": false
+    "flagship": false,
+    "msrp": 299,
+    "dieName": "AD107",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5090",
     "cudaCores": 21760,
     "vram": 32,
+    "releaseYear": 2025,
     "flagship": true,
-    "specialFlagship": false 
+    "specialFlagship": false,
+    "msrp": 1999,
+    "dieName": "GB202",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5080",
     "cudaCores": 10752,
     "vram": 16,
-    "flagship": false
+    "releaseYear": 2025,
+    "flagship": false,
+    "msrp": 999,
+    "dieName": "GB203",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5070 Ti",
     "cudaCores": 8960,
     "vram": 16,
-    "flagship": false
+    "releaseYear": 2025,
+    "flagship": false,
+    "msrp": 799,
+    "dieName": "GB205",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5070",
     "cudaCores": 6144,
     "vram": 12,
-    "flagship": false
+    "releaseYear": 2025,
+    "flagship": false,
+    "msrp": 549,
+    "dieName": "GB206",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5060 Ti",
     "cudaCores": 4608,
     "vram": 16,
-    "flagship": false
+    "releaseYear": 2025,
+    "flagship": false,
+    "msrp": 499,
+    "dieName": "GB207",
+    "manufacturingNode": 4
   },
   {
     "series": "5000",
     "model": "RTX 5060",
     "cudaCores": 3840,
     "vram": 8,
-    "flagship": false
+    "releaseYear": 2025,
+    "flagship": false,
+    "msrp": 329,
+    "dieName": "GB207",
+    "manufacturingNode": 4
   }
 ]

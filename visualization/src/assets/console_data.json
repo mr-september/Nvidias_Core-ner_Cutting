@@ -1,0 +1,110 @@
+[
+  {
+    "platform": "PlayStation",
+    "name": "PlayStation",
+    "launchYear": 1994,
+    "launchPriceUSD": 299,
+    "memory": "1/1024",
+    "storage": "Memory Card",
+    "nodeNM": null
+  },
+  {
+    "platform": "PlayStation",
+    "name": "PlayStation 2",
+    "launchYear": 2000,
+    "launchPriceUSD": 299,
+    "memory": "4/1024",
+    "storage": "Memory Card / Optional HDD",
+    "nodeNM": 250
+  },
+  {
+    "platform": "PlayStation",
+    "name": "PlayStation 3",
+    "launchYear": 2006,
+    "launchPriceUSD": 599,
+    "memory": "256/1024",
+    "storage": "60GB HDD",
+    "nodeNM": 90
+  },
+  {
+    "platform": "PlayStation",
+    "name": "PlayStation 4",
+    "launchYear": 2013,
+    "launchPriceUSD": 399,
+    "memory": "8",
+    "storage": "500GB HDD",
+    "nodeNM": 28
+  },
+    {
+    "platform": "PlayStation",
+    "name": "PlayStation 4 Pro",
+    "launchYear": 2016,
+    "launchPriceUSD": 399,
+    "memory": "8",
+    "storage": "1TB HDD",
+    "nodeNM": 16
+  },
+  {
+    "platform": "PlayStation",
+    "name": "PlayStation 5",
+    "launchYear": 2020,
+    "launchPriceUSD": 499,
+    "memory": "16",
+    "storage": "825GB SSD",
+    "nodeNM": 7
+  },
+   {
+    "platform": "PlayStation",
+    "name": "PlayStation 5 Pro",
+    "launchYear": 2024,
+    "launchPriceUSD": 699,
+    "memory": "16",
+    "storage": "2TB SSD",
+    "nodeNM": 7
+  },
+  {
+    "platform": "Xbox",
+    "name": "Xbox",
+    "launchYear": 2001,
+    "launchPriceUSD": 299,
+    "memory": "64/1024",
+    "storage": "8GB HDD",
+    "nodeNM": 180
+  },
+  {
+    "platform": "Xbox",
+    "name": "Xbox 360",
+    "launchYear": 2005,
+    "launchPriceUSD": 399,
+    "memory": "512/1024",
+    "storage": "20GB HDD",
+    "nodeNM": 90
+  },
+  {
+    "platform": "Xbox",
+    "name": "Xbox One",
+    "launchYear": 2013,
+    "launchPriceUSD": 499,
+    "memory": "8",
+    "storage": "500GB HDD",
+    "nodeNM": 28
+  },
+  {
+    "platform": "Xbox",
+    "name": "Xbox One X",
+    "launchYear": 2017,
+    "launchPriceUSD": 499,
+    "memory": "12",
+    "storage": "1TB HDD",
+    "nodeNM": 16
+  },
+  {
+    "platform": "Xbox",
+    "name": "Xbox Series X",
+    "launchYear": 2020,
+    "launchPriceUSD": 499,
+    "memory": "16",
+    "storage": "1TB SSD",
+    "nodeNM": 7
+  }
+]

@@ -1,0 +1,177 @@
+{
+  "GF110": {
+    "fullCudaCores": 512,
+    "dieSizeMM2": 520,
+    "generation": "Fermi"
+  },
+  "GF114": {
+    "fullCudaCores": 384,
+    "dieSizeMM2": 332,
+    "generation": "Fermi"
+  },
+  "GF116": {
+    "fullCudaCores": 192,
+    "dieSizeMM2": 238,
+    "generation": "Fermi"
+  },
+  "GF108": {
+    "fullCudaCores": 96,
+    "dieSizeMM2": 116,
+    "generation": "Fermi"
+  },
+  "GK104": {
+    "fullCudaCores": 1536,
+    "dieSizeMM2": 294,
+    "generation": "Kepler"
+  },
+  "GK106": {
+    "fullCudaCores": 960,
+    "dieSizeMM2": 214,
+    "generation": "Kepler"
+  },
+  "GK107": {
+    "fullCudaCores": 384,
+    "dieSizeMM2": 118,
+    "generation": "Kepler"
+  },
+  "GK110": {
+    "fullCudaCores": 2880,
+    "dieSizeMM2": 561,
+    "generation": "Kepler"
+  },
+  "GM107": {
+    "fullCudaCores": 640,
+    "dieSizeMM2": 148,
+    "generation": "Maxwell"
+  },
+  "GM200": {
+    "fullCudaCores": 3072,
+    "dieSizeMM2": 601,
+    "generation": "Maxwell"
+  },
+  "GM204": {
+    "fullCudaCores": 2048,
+    "dieSizeMM2": 398,
+    "generation": "Maxwell"
+  },
+  "GM206": {
+    "fullCudaCores": 1024,
+    "dieSizeMM2": 228,
+    "generation": "Maxwell"
+  },
+  "GP108": {
+    "fullCudaCores": 384,
+    "dieSizeMM2": 74,
+    "generation": "Pascal"
+  },
+  "GP102": {
+    "fullCudaCores": 3840,
+    "dieSizeMM2": 471,
+    "generation": "Pascal"
+  },
+  "GP104": {
+    "fullCudaCores": 2560,
+    "dieSizeMM2": 314,
+    "generation": "Pascal"
+  },
+  "GP106": {
+    "fullCudaCores": 1280,
+    "dieSizeMM2": 200,
+    "generation": "Pascal"
+  },
+  "GP107": {
+    "fullCudaCores": 768,
+    "dieSizeMM2": 132,
+    "generation": "Pascal"
+  },
+  "TU117": {
+    "fullCudaCores": 1024,
+    "dieSizeMM2": 200,
+    "generation": "Turing"
+  },
+  "TU116": {
+    "fullCudaCores": 1536,
+    "dieSizeMM2": 284,
+    "generation": "Turing"
+  },
+  "TU102": {
+    "fullCudaCores": 4608,
+    "dieSizeMM2": 754,
+    "generation": "Turing"
+  },
+  "TU104": {
+    "fullCudaCores": 3072,
+    "dieSizeMM2": 545,
+    "generation": "Turing"
+  },
+  "TU106": {
+    "fullCudaCores": 2304,
+    "dieSizeMM2": 445,
+    "generation": "Turing"
+  },
+  "GA102": {
+    "fullCudaCores": 10752,
+    "dieSizeMM2": 628.4,
+    "generation": "Ampere"
+  },
+  "GA104": {
+    "fullCudaCores": 6144,
+    "dieSizeMM2": 392.5,
+    "generation": "Ampere"
+  },
+  "GA106": {
+    "fullCudaCores": 3840,
+    "dieSizeMM2": 276,
+    "generation": "Ampere"
+  },
+  "AD102": {
+    "fullCudaCores": 18432,
+    "dieSizeMM2": 609,
+    "generation": "Ada Lovelace"
+  },
+  "AD103": {
+    "fullCudaCores": 10240,
+    "dieSizeMM2": 379,
+    "generation": "Ada Lovelace"
+  },
+  "AD104": {
+    "fullCudaCores": 7680,
+    "dieSizeMM2": 294,
+    "generation": "Ada Lovelace"
+  },
+  "AD106": {
+    "fullCudaCores": 4608,
+    "dieSizeMM2": 188,
+    "generation": "Ada Lovelace"
+  },
+  "AD107": {
+    "fullCudaCores": 3072,
+    "dieSizeMM2": 159,
+    "generation": "Ada Lovelace"
+  },
+  "GB202": {
+    "fullCudaCores": 21760,
+    "dieSizeMM2": null,
+    "generation": "Blackwell" 
+  },
+  "GB203": {
+    "fullCudaCores": 10752,
+    "dieSizeMM2": null,
+    "generation": "Blackwell"
+  },
+  "GB205": {
+    "fullCudaCores": 8960,
+    "dieSizeMM2": null,
+    "generation": "Blackwell"
+  },
+  "GB206": {
+    "fullCudaCores": 6144,
+    "dieSizeMM2": null,
+    "generation": "Blackwell"
+  },
+  "GB207": {
+    "fullCudaCores": 4608,
+    "dieSizeMM2": null,
+    "generation": "Blackwell"
+  }
+}
