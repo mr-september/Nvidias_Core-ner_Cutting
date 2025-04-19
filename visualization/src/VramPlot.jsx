@@ -466,10 +466,14 @@ function VramPlot({
                             // Special handling for PS4 Pro to avoid overlap with Xbox One X
                             // Check if we need to break the label into two lines
                             if (console.name.includes("4 Pro")) {
-                                // Check if Xbox One X exists in the same year range
-                                const hasXboxOneX = filteredConsoleData.some(c => c && c.name && c.name.includes("One X") && c.launchYear === console.launchYear);
+                                // Check if Xbox One X exists in the same year range AND Xbox platform is visible
+                                const hasXboxOneX = filteredConsoleData.some(c => 
+                                    c && c.name && 
+                                    c.name.includes("One X") &&
+                                    visibleConsolePlatforms["Xbox"] // Make sure Xbox is actually visible
+                                );
 
-                                // If Xbox One X exists and is potentially being shown, break the label into two lines
+                                // If Xbox One X exists and is being shown, break the label into two lines
                                 if (hasXboxOneX) {
                                     // First create the "PS4" part of the label
                                     consoleLayer.append("text")
