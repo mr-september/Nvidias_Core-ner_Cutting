@@ -28,7 +28,7 @@ function DieAreaPlot({
         svg.selectAll("*").remove(); // Clear previous renders
 
         // --- Chart Dimensions and Margins ---
-        const margin = { top: 60, right: 250, bottom: 50, left: 90 };
+        const margin = { top: 60, right: 250, bottom: 60, left: 90 };
         const containerWidth = 1000; // Use a fixed container width
         const containerHeight = 450; // Use a fixed container height
         const width = containerWidth - margin.left - margin.right;
