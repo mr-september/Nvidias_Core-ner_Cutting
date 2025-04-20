@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import * as d3 from 'd3';
 // Import specific statistical functions from d3-array
 import { deviation, mean, median, quantile, min, max, range } from 'd3-array'; // Import deviation, mean, etc.
+import inflationData from './assets/inflation_data.json'; // Import inflation data
 // App.css is imported in App.jsx and applies globally
 
 function DieAreaPlot({
@@ -18,6 +19,9 @@ function DieAreaPlot({
 }) {
     // Add state for toggling between full and effective die calculations
     const [useEffectiveDieSize, setUseEffectiveDieSize] = React.useState(false);
+    
+    // Add state for toggling inflation adjustment
+    const [useInflationAdjustment, setUseInflationAdjustment] = React.useState(false);
 
     useEffect(() => {
         // Ensure data and ref are available before attempting to draw
@@ -73,15 +77,66 @@ function DieAreaPlot({
         const chartGroup = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
             
-        // Add die calculation toggle button at the top of the chart
+        // Add toggle buttons at the top of the chart
         const toggleButtonWidth = 120;
         const toggleButtonHeight = 25;
-        const toggleButtonX = width - toggleButtonWidth - 10; // Positioned at top-right
+        const toggleButtonSpacing = 10;
+        
+        // Position the toggles next to each other
+        const dieToggleX = width - toggleButtonWidth - 10; // Die toggle on the right
+        const inflationToggleX = dieToggleX - toggleButtonWidth - toggleButtonSpacing; // Inflation toggle to the left
         const toggleButtonY = -40; // Above the chart
         
-        // Toggle button background
+        // Inflation toggle button background
         chartGroup.append("rect")
-            .attr("x", toggleButtonX)
+            .attr("x", inflationToggleX)
+            .attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth)
+            .attr("height", toggleButtonHeight)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", useInflationAdjustment ? "#646cff" : "#444")
+            .attr("cursor", "pointer")
+            .attr("class", "inflation-toggle-btn")
+            .on("click", function() {
+                setUseInflationAdjustment(!useInflationAdjustment);
+            })
+            .on("mouseover", function(event) {
+                // Show tooltip on hover
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible')
+                    .style('left', `${event.pageX}px`)
+                    .style('top', `${event.pageY - 40}px`)
+                    .html(`
+                        <div style="text-align: center; padding: 5px;">
+                            <strong>Price Inflation Adjustment</strong>
+                        </div>
+                        <div style="padding: 5px;">
+                            <strong>Nominal:</strong> Shows the original MSRP as announced at launch.<br>
+                            <strong>Inflation Adjusted:</strong> Adjusts all prices to 2025 dollars using US CPI data.<br>
+                            Base year: ${inflationData.base_year}
+                        </div>
+                    `);
+            })
+            .on("mouseout", function() {
+                // Hide tooltip
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'hidden');
+            });
+
+        // Inflation toggle button text
+        chartGroup.append("text")
+            .attr("x", inflationToggleX + toggleButtonWidth/2)
+            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#fff")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .text(useInflationAdjustment ? "Inflation Adj." : "Nominal");
+            
+        // Die calculation toggle button background
+        chartGroup.append("rect")
+            .attr("x", dieToggleX)
             .attr("y", toggleButtonY)
             .attr("width", toggleButtonWidth)
             .attr("height", toggleButtonHeight)
@@ -105,7 +160,8 @@ function DieAreaPlot({
                         </div>
                         <div style="padding: 5px;">
                             <strong>Full Die:</strong> Uses the total die area for price calculation.<br>
-                            <strong>Disabled Die:</strong> Accounts for partially disabled dies where some CUDA cores are inactive, resulting in a more accurate effective price per mm².
+                            <strong>Disabled Die:</strong> Accounts for partially disabled dies where some CUDA cores are inactive.<br>
+                            Equation for calculating Disabled Die is 30% fixed and 70% linear scaling.
                         </div>
                     `);
             })
@@ -115,9 +171,9 @@ function DieAreaPlot({
                     .style('visibility', 'hidden');
             });
 
-        // Toggle button text
+        // Die toggle button text
         chartGroup.append("text")
-            .attr("x", toggleButtonX + toggleButtonWidth/2)
+            .attr("x", dieToggleX + toggleButtonWidth/2)
             .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
             .attr("text-anchor", "middle")
             .attr("fill", "#fff")
@@ -177,6 +233,15 @@ function DieAreaPlot({
                 // Most chip components scale linearly while some (like cache, I/O) remain constant
                 const effectiveDieSize = dieInfo.dieSizeMM2 * (0.3 + 0.7 * dieUtilizationRatio);
                 
+                // Apply inflation adjustment if enabled
+                const year = gpu.releaseYear.toString();
+                const inflationMultiplier = useInflationAdjustment && inflationData.multipliers[year] 
+                    ? inflationData.multipliers[year]
+                    : 1;
+                
+                // Adjust MSRP for inflation if the toggle is on
+                const adjustedMsrp = gpu.msrp * inflationMultiplier;
+                
                 return {
                     ...gpu,
                     dieSizeMM2: dieInfo.dieSizeMM2, // Keep original die size
@@ -185,11 +250,19 @@ function DieAreaPlot({
                     effectiveDieSize: effectiveDieSize, // Add effective die size
                     // Assume generation is consistently available in dieInfo or GPU data
                     generation: dieInfo.generation || "Unknown", // Fallback for generation
-                    // Calculate price per actual die area and effective die area
-                    pricePerMM2: gpu.msrp / dieInfo.dieSizeMM2, // Original price per mm²
-                    effectivePricePerMM2: gpu.msrp / effectiveDieSize, // Price per effective mm²
-                    // Store both price metrics but determine which to use for display based on toggle
-                    displayPricePerMM2: useEffectiveDieSize ? (gpu.msrp / effectiveDieSize) : (gpu.msrp / dieInfo.dieSizeMM2)
+                    // Store the inflation multiplier for this GPU's release year
+                    inflationMultiplier: inflationMultiplier,
+                    // Store both original and inflation-adjusted MSRPs
+                    originalMsrp: gpu.msrp,
+                    adjustedMsrp: adjustedMsrp,
+                    // Calculate price per actual die area and effective die area (with or without inflation adjustment)
+                    pricePerMM2: adjustedMsrp / dieInfo.dieSizeMM2, // Price per mm² (possibly inflation adjusted)
+                    effectivePricePerMM2: adjustedMsrp / effectiveDieSize, // Price per effective mm² (possibly inflation adjusted)
+                    // Raw values without inflation adjustment (for tooltips)
+                    rawPricePerMM2: gpu.msrp / dieInfo.dieSizeMM2,
+                    rawEffectivePricePerMM2: gpu.msrp / effectiveDieSize,
+                    // Store both price metrics but determine which to use for display based on toggles
+                    displayPricePerMM2: useEffectiveDieSize ? (adjustedMsrp / effectiveDieSize) : (adjustedMsrp / dieInfo.dieSizeMM2)
                 };
             });
 
@@ -866,14 +939,14 @@ function DieAreaPlot({
                                     <strong>Node Size:</strong> ${nodeSize} nm<br>
                                     
                                     <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
-                                        <strong style="color:#a0e6ff;">Raw Price per mm²:</strong>
+                                        <strong style="color:#a0e6ff;">Full Price per mm²:</strong>
                                         <br>Mean: $${meanPrice.toFixed(2)}
                                         <br>Median: $${medianPrice.toFixed(2)}
                                         <br>S.D.: $${stdDev.toFixed(2)}
                                     </div>
                                     
                                     <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
-                                        <strong style="color:#a0ffb0;">Effective Price per mm²:</strong>
+                                        <strong style="color:#a0ffb0;">Cut per mm²:</strong>
                                         ${effectiveMeanPrice !== null ? `<br>Mean: $${effectiveMeanPrice.toFixed(2)}` : ''}
                                         ${effectiveMedianPrice !== null ? `<br>Median: $${effectiveMedianPrice.toFixed(2)}` : ''}
                                         ${effectivePrices.length > 0 ? `<br>Adjusted for ${effectivePrices.length} die-cut GPUs` : '<br>No data available'}
@@ -1015,11 +1088,14 @@ function DieAreaPlot({
             // Peg 300mm² as the default size (radius 4)
             const radiusScale = d3.scaleSqrt()  // Square root scale for perceptually accurate area representation
                 .domain([0, 300, 800])  // Min, reference point, max expected die size in mm²
-                .range([2, 4, 8])       // Min, default, max radius
+                .range([1, 4, 11])       // Min, default, max radius
                 .clamp(true);           // Restrict output to the range values
             
+            // Sort data to render larger points first, smaller points on top
+            const sortedData = [...processedData].sort((a, b) => b.dieSizeMM2 - a.dieSizeMM2);
+            
             chartGroup.selectAll(".die-area-dot")
-                 .data(processedData, d => d.model) // Use processedData and a key function (GPU model)
+                 .data(sortedData, d => d.model) // Use sorted data and a key function (GPU model)
                  .join(
                      enter => enter.append('circle')
                          .attr('class', d => `die-area-dot dot-${d.series.replace(/\s+/g, '-')}`)
@@ -1062,12 +1138,26 @@ function DieAreaPlot({
                          <div class="tooltip-title" style="color: ${colorScale(d.series)};">${d.model}</div>
                          <div class="tooltip-info">
                              <strong>Series:</strong> ${d.series} series (${d.generation})<br>
-                             <strong>MSRP:</strong> ${d.msrp ? `$${d.msrp.toLocaleString()}` : 'N/A'}<br>
+                             <strong>MSRP:</strong> ${d.msrp ? `$${d.msrp.toLocaleString()}` : 'N/A'}
+                             ${useInflationAdjustment ? 
+                                 `<span style="color: #a0e6ff;"> (${d.inflationMultiplier.toFixed(2)}× to ${inflationData.base_year})</span>` : 
+                                 ''}<br>
                              <strong>Die Size:</strong> ${d.dieSizeMM2 ? `${d.dieSizeMM2.toLocaleString()} mm²` : 'N/A'}<br>
                              <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'} / ${d.fullCudaCores ? d.fullCudaCores.toLocaleString() : 'N/A'}<br>
                              <strong>Die Utilization:</strong> ${d.dieUtilizationRatio != null ? `${(d.dieUtilizationRatio * 100).toFixed(1)}%` : 'N/A'}<br>
-                             <strong>Raw Price per mm²:</strong> ${d.pricePerMM2 != null && isFinite(d.pricePerMM2) ? `$${d.pricePerMM2.toFixed(2)}` : 'N/A'}<br>
-                             <strong>Effective Price per mm²:</strong> ${d.effectivePricePerMM2 != null && isFinite(d.effectivePricePerMM2) ? `$${d.effectivePricePerMM2.toFixed(2)}` : 'N/A'}<br>
+                             
+                             ${useEffectiveDieSize ? 
+                                 `<strong>Effective Price per mm²:</strong>` : 
+                                 `<strong>Price per mm²:</strong>`} 
+                             ${d.displayPricePerMM2 != null && isFinite(d.displayPricePerMM2) ? 
+                                 `$${d.displayPricePerMM2.toFixed(2)}` : 
+                                 'N/A'}
+                             ${useInflationAdjustment ? 
+                                 ` <span style="color: #a0e6ff;">(${useEffectiveDieSize ? 
+                                    '$' + d.rawEffectivePricePerMM2.toFixed(2) : 
+                                    '$' + d.rawPricePerMM2.toFixed(2)} nominal)</span>` : 
+                                 ''}<br>
+                             
                              <strong>Die Name:</strong> ${d.dieName || 'N/A'}<br>
                              <strong>Year:</strong> ${d.releaseYear || 'N/A'}
                          </div>
@@ -1077,7 +1167,6 @@ function DieAreaPlot({
 
                      // Highlight the point
                      d3.select(this)
-                         .attr('r', 6)
                          .attr('stroke-width', 2)
                          .attr('opacity', 1); // Ensure full opacity when hovered
                  })
@@ -1108,6 +1197,7 @@ function DieAreaPlot({
         showAllDieGenerations,
         setShowAllDieGenerations,
         useEffectiveDieSize, // Add toggle state dependency to re-render when changed
+        useInflationAdjustment, // Add inflation toggle state dependency to re-render when changed
         // Removed unused props: columnOrder, getTierFromModel
     ]);
 
