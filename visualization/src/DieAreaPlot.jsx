@@ -16,6 +16,8 @@ function DieAreaPlot({
     showAllDieGenerations,
     setShowAllDieGenerations
 }) {
+    // Add state for toggling between full and effective die calculations
+    const [useEffectiveDieSize, setUseEffectiveDieSize] = React.useState(false);
 
     useEffect(() => {
         // Ensure data and ref are available before attempting to draw
@@ -70,6 +72,58 @@ function DieAreaPlot({
 
         const chartGroup = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+        // Add die calculation toggle button at the top of the chart
+        const toggleButtonWidth = 120;
+        const toggleButtonHeight = 25;
+        const toggleButtonX = width - toggleButtonWidth - 10; // Positioned at top-right
+        const toggleButtonY = -40; // Above the chart
+        
+        // Toggle button background
+        chartGroup.append("rect")
+            .attr("x", toggleButtonX)
+            .attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth)
+            .attr("height", toggleButtonHeight)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", useEffectiveDieSize ? "#646cff" : "#444")
+            .attr("cursor", "pointer")
+            .attr("class", "die-toggle-btn")
+            .on("click", function() {
+                setUseEffectiveDieSize(!useEffectiveDieSize);
+            })
+            .on("mouseover", function(event) {
+                // Show tooltip on hover
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible')
+                    .style('left', `${event.pageX}px`)
+                    .style('top', `${event.pageY - 40}px`)
+                    .html(`
+                        <div style="text-align: center; padding: 5px;">
+                            <strong>Die Price Calculation</strong>
+                        </div>
+                        <div style="padding: 5px;">
+                            <strong>Full Die:</strong> Uses the total die area for price calculation.<br>
+                            <strong>Disabled Die:</strong> Accounts for partially disabled dies where some CUDA cores are inactive, resulting in a more accurate effective price per mm².
+                        </div>
+                    `);
+            })
+            .on("mouseout", function() {
+                // Hide tooltip
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'hidden');
+            });
+
+        // Toggle button text
+        chartGroup.append("text")
+            .attr("x", toggleButtonX + toggleButtonWidth/2)
+            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#fff")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .text(useEffectiveDieSize ? "Disabled Die" : "Full Die");
 
         // Add tooltip container to the DOM if it doesn't exist with enhanced styling
         const tooltipContainerClass = 'die-area-tooltip-container';
@@ -112,12 +166,30 @@ function DieAreaPlot({
             })
             .map(gpu => {
                 const dieInfo = gpuDieData[gpu.dieName];
+                
+                // Calculate the die utilization ratio (how much of the full die is being used)
+                const fullCudaCores = dieInfo.fullCudaCores || 0;
+                const actualCudaCores = gpu.cudaCores || 0;
+                const dieUtilizationRatio = fullCudaCores > 0 ? actualCudaCores / fullCudaCores : 1;
+                
+                // Calculate effective die area (the portion that's active based on CUDA core ratio)
+                // Using a formula that balances linear and non-linear scaling of die area to cores
+                // Most chip components scale linearly while some (like cache, I/O) remain constant
+                const effectiveDieSize = dieInfo.dieSizeMM2 * (0.3 + 0.7 * dieUtilizationRatio);
+                
                 return {
                     ...gpu,
-                    dieSizeMM2: dieInfo.dieSizeMM2,
+                    dieSizeMM2: dieInfo.dieSizeMM2, // Keep original die size
+                    fullCudaCores: fullCudaCores, // Add full CUDA cores info
+                    dieUtilizationRatio: dieUtilizationRatio, // Add utilization ratio
+                    effectiveDieSize: effectiveDieSize, // Add effective die size
                     // Assume generation is consistently available in dieInfo or GPU data
                     generation: dieInfo.generation || "Unknown", // Fallback for generation
-                    pricePerMM2: gpu.msrp / dieInfo.dieSizeMM2
+                    // Calculate price per actual die area and effective die area
+                    pricePerMM2: gpu.msrp / dieInfo.dieSizeMM2, // Original price per mm²
+                    effectivePricePerMM2: gpu.msrp / effectiveDieSize, // Price per effective mm²
+                    // Store both price metrics but determine which to use for display based on toggle
+                    displayPricePerMM2: useEffectiveDieSize ? (gpu.msrp / effectiveDieSize) : (gpu.msrp / dieInfo.dieSizeMM2)
                 };
             });
 
@@ -549,7 +621,7 @@ function DieAreaPlot({
 
                 // Filter for valid prices for KDE and stats
                 const validPrices = gpusInGroup
-                    .map(d => d.pricePerMM2)
+                    .map(d => d.displayPricePerMM2) // Use the display price that depends on toggle state
                     .filter(price => price != null && isFinite(price) && price >= 0 && price <= yMax); // Ensure price is finite and within y scale bounds
 
                 // Only continue if we have sufficient valid data points for a distribution
@@ -727,10 +799,18 @@ function DieAreaPlot({
                         .attr("stroke-opacity", 0.8)
                         .attr("class", `violin-shape violin-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`)
                         .on('mouseover', function(event) {
-                            // Calculate statistics for tooltip
+                            // Calculate statistics for tooltip for both raw and effective prices
                             const meanPrice = mean(validPrices);
                             const medianPrice = median(validPrices);
                             const stdDev = deviation(validPrices);
+                            
+                            // Get effective price data as well
+                            const effectivePrices = gpusInGroup
+                                .map(d => d.effectivePricePerMM2)
+                                .filter(price => price != null && isFinite(price) && price >= 0 && price <= yMax);
+                            
+                            const effectiveMeanPrice = effectivePrices.length > 0 ? mean(effectivePrices) : null;
+                            const effectiveMedianPrice = effectivePrices.length > 0 ? median(effectivePrices) : null;
                             
                             // Find the generation and node size for this series
                             // Get unique die names for this series group
@@ -784,10 +864,24 @@ function DieAreaPlot({
                                 <div class="tooltip-info">
                                     <strong>${generation}</strong><br>
                                     <strong>Node Size:</strong> ${nodeSize} nm<br>
-                                    <strong>Mean:</strong> $${meanPrice.toFixed(2)} per mm²<br>
-                                    <strong>Median:</strong> $${medianPrice.toFixed(2)} per mm²<br>
-                                    <strong>S.D.:</strong> $${stdDev.toFixed(2)}<br>
-                                    <strong>Sample Size:</strong> ${validPrices.length} GPUs
+                                    
+                                    <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
+                                        <strong style="color:#a0e6ff;">Raw Price per mm²:</strong>
+                                        <br>Mean: $${meanPrice.toFixed(2)}
+                                        <br>Median: $${medianPrice.toFixed(2)}
+                                        <br>S.D.: $${stdDev.toFixed(2)}
+                                    </div>
+                                    
+                                    <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
+                                        <strong style="color:#a0ffb0;">Effective Price per mm²:</strong>
+                                        ${effectiveMeanPrice !== null ? `<br>Mean: $${effectiveMeanPrice.toFixed(2)}` : ''}
+                                        ${effectiveMedianPrice !== null ? `<br>Median: $${effectiveMedianPrice.toFixed(2)}` : ''}
+                                        ${effectivePrices.length > 0 ? `<br>Adjusted for ${effectivePrices.length} die-cut GPUs` : '<br>No data available'}
+                                    </div>
+                                    
+                                    <div style="margin-top:5px;">
+                                        <strong>Sample Size:</strong> ${validPrices.length} GPUs
+                                    </div>
                                 </div>
                             `;
 
@@ -934,7 +1028,7 @@ function DieAreaPlot({
                              const displaySeries = seriesPositionMapping[d.series] || d.series;
                              return xScale(displaySeries);
                          })
-                         .attr('cy', d => yScale(d.pricePerMM2))
+                         .attr('cy', d => yScale(d.displayPricePerMM2))
                          .attr('fill', d => colorScale(d.series))
                          .attr('stroke', '#fff')
                          .attr('stroke-width', 0.5)
@@ -948,7 +1042,7 @@ function DieAreaPlot({
                               const displaySeries = seriesPositionMapping[d.series] || d.series;
                               return xScale(displaySeries);
                          })
-                         .attr('cy', d => yScale(d.pricePerMM2))
+                         .attr('cy', d => yScale(d.displayPricePerMM2))
                          .attr('fill', d => colorScale(d.series))
                          .attr('r', d => radiusScale(d.dieSizeMM2)) // Scale radius based on die size
                          .attr('opacity', 1), // Ensure opacity is correct after update
@@ -970,7 +1064,10 @@ function DieAreaPlot({
                              <strong>Series:</strong> ${d.series} series (${d.generation})<br>
                              <strong>MSRP:</strong> ${d.msrp ? `$${d.msrp.toLocaleString()}` : 'N/A'}<br>
                              <strong>Die Size:</strong> ${d.dieSizeMM2 ? `${d.dieSizeMM2.toLocaleString()} mm²` : 'N/A'}<br>
-                             <strong>Price per mm²:</strong> ${d.pricePerMM2 != null && isFinite(d.pricePerMM2) ? `$${d.pricePerMM2.toFixed(2)}` : 'N/A'}<br>
+                             <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'} / ${d.fullCudaCores ? d.fullCudaCores.toLocaleString() : 'N/A'}<br>
+                             <strong>Die Utilization:</strong> ${d.dieUtilizationRatio != null ? `${(d.dieUtilizationRatio * 100).toFixed(1)}%` : 'N/A'}<br>
+                             <strong>Raw Price per mm²:</strong> ${d.pricePerMM2 != null && isFinite(d.pricePerMM2) ? `$${d.pricePerMM2.toFixed(2)}` : 'N/A'}<br>
+                             <strong>Effective Price per mm²:</strong> ${d.effectivePricePerMM2 != null && isFinite(d.effectivePricePerMM2) ? `$${d.effectivePricePerMM2.toFixed(2)}` : 'N/A'}<br>
                              <strong>Die Name:</strong> ${d.dieName || 'N/A'}<br>
                              <strong>Year:</strong> ${d.releaseYear || 'N/A'}
                          </div>
@@ -1010,6 +1107,7 @@ function DieAreaPlot({
         setActiveGenerations,
         showAllDieGenerations,
         setShowAllDieGenerations,
+        useEffectiveDieSize, // Add toggle state dependency to re-render when changed
         // Removed unused props: columnOrder, getTierFromModel
     ]);
 
