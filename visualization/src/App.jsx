@@ -169,7 +169,7 @@ function App() {
     return (
         <div className="App">
             {/* CUDA Plot Section */}
-            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>Nvidia's Core-ner Cutting</h1>
+            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>NVIDIA GPUs Architecture & Value Analyses</h1>
             <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
                 This is an open-source project. Please feel free to have a look at the source code and contribute!
             </p>
