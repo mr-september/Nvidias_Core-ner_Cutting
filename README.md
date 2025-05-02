@@ -1,6 +1,6 @@
 Github hosted website URL: https://mr-september.github.io/Nvidias_Core-ner_Cutting/
 
-# NVIDIA GPU Core Visualization
+# NVIDIA GPUs Architecture & Value Analyses
 
 This project offers visualizations of several *alternative* NVIDIA GPU metrics over time, starting from the 500 series. It features multiple interactive charts:
 
