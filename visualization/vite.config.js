@@ -6,6 +6,19 @@ export default defineConfig({
   plugins: [react()],
   base: '/Nvidias_Core-ner_Cutting/', // Base path for GitHub Pages
   build: {
-    outDir: '../docs'
+    outDir: '../docs',
+    rollupOptions: {
+      output: {
+        // Use manual chunking to consolidate files
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'd3'],
+          // Group all the application code in a single chunk
+          app: ['./src/main.jsx', './src/App.jsx', './src/CudaPlot.jsx', './src/DieAreaPlot.jsx', './src/VramPlot.jsx']
+        },
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
+      }
+    }
   }
 })
