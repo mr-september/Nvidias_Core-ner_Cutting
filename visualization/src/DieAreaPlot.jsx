@@ -1,10 +1,11 @@
 // DieAreaPlot.jsx
-import React, { useEffect, useState } from 'react'; // Import useState
+import React, { useEffect, useState } from 'react';
 import * as d3 from 'd3';
 // Import specific statistical functions from d3-array
-import { deviation, mean, median, quantile, min, max, range } from 'd3-array'; // Import deviation, mean, etc.
+import { deviation, mean, median, quantile, min, max, range } from 'd3-array';
 import inflationData from './assets/inflation_data.json'; // Import inflation data
 import medianRealWageData from './assets/median_real_wage_data.json'; // Import median REAL wage data
+import waferPrices from './assets/wafer_prices.json'; // Import wafer prices data
 // App.css is imported in App.jsx and applies globally
 
 function DieAreaPlot({
@@ -18,16 +19,16 @@ function DieAreaPlot({
     showAllDieGenerations,
     setShowAllDieGenerations
 }) {
-    // Add state for toggling between full and effective die calculations
+    // State for toggling between full and effective die calculations
     const [useEffectiveDieSize, setUseEffectiveDieSize] = useState(false);
-
-    // Add state for toggling CPI inflation adjustment
+    // State for toggling CPI inflation adjustment
     const [useCpiAdjustment, setUseCpiAdjustment] = useState(false);
-
-    // Add state for toggling scaling based on real wage changes
+    // State for toggling scaling based on real wage changes
     const [useRealWageScaling, setUseRealWageScaling] = useState(false);
+    // State for toggling wafer price background area and second axis
+    const [showWaferPriceArea, setShowWaferPriceArea] = useState(true); // State controls area + second axis
 
-    // Function to handle adjustment toggle clicks - allow both toggles to be on simultaneously
+    // Function to handle adjustment toggle clicks
     const handleAdjustmentToggle = (type) => {
         if (type === 'cpi') {
             setUseCpiAdjustment(!useCpiAdjustment);
@@ -36,11 +37,10 @@ function DieAreaPlot({
         }
     };
 
-
     useEffect(() => {
-        // Ensure data and ref are available before attempting to draw
-        if (!gpuData || !gpuDieData || !dieAreaSvgRef.current) {
-            console.warn("DieAreaPlot: Missing required props or ref.");
+        // Ensure data and ref are available
+        if (!gpuData || !gpuDieData || !dieAreaSvgRef.current || !waferPrices || !inflationData || !medianRealWageData) {
+            console.warn("DieAreaPlot: Missing required props, ref, or data files.");
             return;
         }
 
@@ -48,205 +48,37 @@ function DieAreaPlot({
         svg.selectAll("*").remove(); // Clear previous renders
 
         // --- Chart Dimensions and Margins ---
-        const margin = { top: 60, right: 250, bottom: 60, left: 90 };
-        const containerWidth = 1000; // Use a fixed container width
-        const containerHeight = 450; // Use a fixed container height
+        // Increase right margin for the second Y-axis
+        const margin = { top: 80, right: 300, bottom: 60, left: 90 }; // Increased top margin for node labels too
+        const containerWidth = 1100; // Increased container width slightly
+        const containerHeight = 450;
         const width = containerWidth - margin.left - margin.right;
         const height = containerHeight - margin.top - margin.bottom;
 
         svg.attr('width', containerWidth)
            .attr('height', containerHeight);
 
-        // Add a rounded border for the chart area with transparent fill and subtle glow
-        // Use the full SVG dimensions for the background rect
-         svg.append("rect")
-            .attr("x", 0) // Start from the SVG edge
-            .attr("y", 0) // Start from the SVG edge
-            .attr("width", containerWidth)
-            .attr("height", containerHeight)
-            .attr("rx", 15) // Rounded corners for the whole SVG area
-            .attr("ry", 15)
+        // --- Background and Filters ---
+        svg.append("rect")
+            .attr("x", 0).attr("y", 0)
+            .attr("width", containerWidth).attr("height", containerHeight)
+            .attr("rx", 15).attr("ry", 15)
             .attr("fill", "transparent")
             .attr("class", "chart-background")
-            .attr("filter", "url(#glow)"); // Apply glow filter
+            .attr("filter", "url(#glow)");
 
-        // Add subtle glow filter for enhanced aesthetics
         const defs = svg.append("defs");
         const filter = defs.append("filter")
             .attr("id", "glow")
-            .attr("x", "-20%")
-            .attr("y", "-20%")
-            .attr("width", "140%")
-            .attr("height", "140%");
-
-        filter.append("feGaussianBlur")
-            .attr("stdDeviation", "3")
-            .attr("result", "blur");
-
-        filter.append("feComposite")
-            .attr("in", "SourceGraphic")
-            .attr("in2", "blur")
-            .attr("operator", "over");
+            .attr("x", "-20%").attr("y", "-20%")
+            .attr("width", "140%").attr("height", "140%");
+        filter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "blur");
+        filter.append("feComposite").attr("in", "SourceGraphic").attr("in2", "blur").attr("operator", "over");
 
         const chartGroup = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
-            
-        // Add toggle buttons at the top of the chart
-        const toggleButtonWidth = 120;
-        const toggleButtonHeight = 25;
-        const toggleButtonSpacing = 10;
 
-        // Position the toggles next to each other
-        const dieToggleX = width - toggleButtonWidth - 10; // Die toggle on the right
-        const wageToggleX = dieToggleX - toggleButtonWidth - toggleButtonSpacing; // Wage toggle to the left
-        const cpiToggleX = wageToggleX - toggleButtonWidth - toggleButtonSpacing; // CPI toggle further left
-        const toggleButtonY = -40; // Above the chart
-        
-        // CPI Inflation toggle button background
-        chartGroup.append("rect")
-            .attr("x", cpiToggleX)
-            .attr("y", toggleButtonY)
-            .attr("width", toggleButtonWidth)
-            .attr("height", toggleButtonHeight)
-            .attr("rx", 5)
-            .attr("ry", 5)
-            .attr("fill", useCpiAdjustment ? "#646cff" : "#444")
-            .attr("cursor", "pointer")
-            .attr("class", "cpi-toggle-btn")
-            .on("click", function() {
-                handleAdjustmentToggle('cpi');
-            })
-            .on("mouseover", function(event) {
-                // Show tooltip on hover
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'visible')
-                    .style('left', `${event.pageX}px`)
-                    .style('top', `${event.pageY - 40}px`)
-                    .html(`
-                        <div style="text-align: center; padding: 5px;">
-                            <strong>CPI Adjustment</strong>
-                        </div>
-                        <div style="padding: 5px;">
-                            <strong>Off:</strong> No CPI adjustment applied.<br>
-                            <strong>On:</strong> Adjusts MSRP to constant ${inflationData.base_year} dollars using US CPI data.<br>
-                            <span style="font-size: 0.9em; color: #aaa;">Can be combined with Wage toggle for real wage adjustment.</span><br>
-                            Base year: ${inflationData.base_year}
-                        </div>
-                    `);
-            })
-            .on("mouseout", function() {
-                // Hide tooltip
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'hidden');
-            });
-
-        // CPI Inflation toggle button text
-        chartGroup.append("text")
-            .attr("x", cpiToggleX + toggleButtonWidth/2)
-            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#fff")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .text(useCpiAdjustment ? "CPI On" : "CPI Off");
-
-        // Real Wage Scaling toggle button background
-        chartGroup.append("rect")
-            .attr("x", wageToggleX)
-            .attr("y", toggleButtonY)
-            .attr("width", toggleButtonWidth)
-            .attr("height", toggleButtonHeight)
-            .attr("rx", 5)
-            .attr("ry", 5)
-            .attr("fill", useRealWageScaling ? "#ff646c" : "#444") // Different color for wage scaling
-            .attr("cursor", "pointer")
-            .attr("class", "wage-toggle-btn")
-            .on("click", function() {
-                handleAdjustmentToggle('wage');
-            })
-            .on("mouseover", function(event) {
-                // Show tooltip on hover
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'visible')
-                    .style('left', `${event.pageX}px`)
-                    .style('top', `${event.pageY - 40}px`)
-                    .html(`
-                        <div style="text-align: center; padding: 5px;">
-                            <strong>Wage Scaling</strong>
-                        </div>
-                        <div style="padding: 5px;">
-                            <strong>Off:</strong> No wage scaling applied.<br>
-                            <strong>On, CPI Off:</strong> Scales MSRP by the change in nominal wages (calculated).<br>
-                            <strong>On, CPI On:</strong> Scales MSRP by the change in real wages (directly from data).<br>
-                            <span style="font-size: 0.9em; color: #aaa;">Base year for wage scaling: 2024</span>
-                        </div>
-                    `);
-            })
-            .on("mouseout", function() {
-                // Hide tooltip
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'hidden');
-            });
-
-        // Real Wage Scaling toggle button text
-        chartGroup.append("text")
-            .attr("x", wageToggleX + toggleButtonWidth/2)
-            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#fff")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .text(useRealWageScaling ? "Wage On" : "Wage Off");
-
-
-        // Die calculation toggle button background
-        chartGroup.append("rect")
-            .attr("x", dieToggleX)
-            .attr("y", toggleButtonY)
-            .attr("width", toggleButtonWidth)
-            .attr("height", toggleButtonHeight)
-            .attr("rx", 5)
-            .attr("ry", 5)
-            .attr("fill", useEffectiveDieSize ? "#646cff" : "#444")
-            .attr("cursor", "pointer")
-            .attr("class", "die-toggle-btn")
-            .on("click", function() {
-                setUseEffectiveDieSize(!useEffectiveDieSize);
-            })
-            .on("mouseover", function(event) {
-                // Show tooltip on hover
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'visible')
-                    .style('left', `${event.pageX}px`)
-                    .style('top', `${event.pageY - 40}px`)
-                    .html(`
-                        <div style="text-align: center; padding: 5px;">
-                            <strong>Die Price Calculation</strong>
-                        </div>
-                        <div style="padding: 5px;">
-                            <strong>Full Die:</strong> Uses the total die area for price calculation.<br>
-                            <strong>Disabled Die:</strong> Accounts for partially disabled dies where some CUDA cores are inactive.<br>
-                            Equation for calculating Disabled Die is 30% fixed and 70% linear scaling.
-                        </div>
-                    `);
-            })
-            .on("mouseout", function() {
-                // Hide tooltip
-                d3.select(`.${tooltipContainerClass}`)
-                    .style('visibility', 'hidden');
-            });
-
-        // Die toggle button text
-        chartGroup.append("text")
-            .attr("x", dieToggleX + toggleButtonWidth/2)
-            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#fff")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .text(useEffectiveDieSize ? "Disabled Die" : "Full Die");
-
-        // Add tooltip container to the DOM if it doesn't exist with enhanced styling
+        // --- Tooltip Setup ---
         const tooltipContainerClass = 'die-area-tooltip-container';
         if (!d3.select('body').select(`.${tooltipContainerClass}`).size()) {
             d3.select('body')
@@ -267,86 +99,162 @@ function DieAreaPlot({
                 .style('transition', 'opacity 0.2s ease-in-out')
                 .style('backdrop-filter', 'blur(5px)');
         } else {
-            // Ensure it's hidden on redraw
             d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden');
         }
 
+        // --- Toggle Buttons ---
+        const toggleButtonWidth = 120;
+        const toggleButtonHeight = 25;
+        const toggleButtonSpacing = 10;
+        // Position toggles slightly lower due to increased top margin
+        const toggleButtonY = -60;
 
-        // Process the data to calculate price per die area
-        // Filter out GPUs where we don't have die size data or price data
+        // Position toggles from right to left
+        const dieToggleX = width - toggleButtonWidth - 10;
+        const wageToggleX = dieToggleX - toggleButtonWidth - toggleButtonSpacing;
+        const cpiToggleX = wageToggleX - toggleButtonWidth - toggleButtonSpacing;
+        const waferToggleX = cpiToggleX - toggleButtonWidth - toggleButtonSpacing; // New toggle on the far left
+
+        // Wafer Price Area Toggle
+        chartGroup.append("rect")
+            .attr("x", waferToggleX).attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth).attr("height", toggleButtonHeight)
+            .attr("rx", 5).attr("ry", 5)
+            .attr("fill", showWaferPriceArea ? "#4CAF50" : "#444") // Green for wafer
+            .attr("cursor", "pointer")
+            .attr("class", "wafer-toggle-btn")
+            .on("click", () => setShowWaferPriceArea(!showWaferPriceArea)) // Update state setter
+            .on("mouseover", (event) => {
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible').style('left', `${event.pageX}px`).style('top', `${event.pageY - 40}px`)
+                    .html(`<div style="text-align: center; padding: 5px;"><strong>Wafer Price Trend</strong></div>
+                           <div style="padding: 5px;"><strong>Off:</strong> Hide wafer price trend area & axis.<br>
+                           <strong>On:</strong> Show estimated wafer price per mm² background area and dedicated Y-axis.<br>
+                           <span style="font-size: 0.9em; color: #aaa;">Data represents rough third-party estimates for wafer prices. Adjustments (CPI/Wage) applied if active.</span></div>`); // Updated tooltip text
+            })
+            .on("mouseout", () => d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden'));
+        chartGroup.append("text")
+            .attr("x", waferToggleX + toggleButtonWidth / 2).attr("y", toggleButtonY + toggleButtonHeight / 2 + 4)
+            .attr("text-anchor", "middle").attr("fill", "#fff").style("font-size", "12px").style("pointer-events", "none")
+            .text(showWaferPriceArea ? "Wafer On" : "Wafer Off"); // Text remains the same
+
+        // CPI Inflation Toggle
+        chartGroup.append("rect")
+            .attr("x", cpiToggleX).attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth).attr("height", toggleButtonHeight)
+            .attr("rx", 5).attr("ry", 5)
+            .attr("fill", useCpiAdjustment ? "#646cff" : "#444")
+            .attr("cursor", "pointer").attr("class", "cpi-toggle-btn")
+            .on("click", () => handleAdjustmentToggle('cpi'))
+            .on("mouseover", (event) => {
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible').style('left', `${event.pageX}px`).style('top', `${event.pageY - 40}px`)
+                    .html(`<div style="text-align: center; padding: 5px;"><strong>CPI Adjustment</strong></div>
+                           <div style="padding: 5px;"><strong>Off:</strong> No CPI adjustment applied.<br>
+                           <strong>On:</strong> Adjusts MSRP to constant ${inflationData.base_year} dollars using US CPI data.<br>
+                           <span style="font-size: 0.9em; color: #aaa;">Can be combined with Wage toggle.</span><br>Base year: ${inflationData.base_year}</div>`);
+            })
+            .on("mouseout", () => d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden'));
+        chartGroup.append("text")
+            .attr("x", cpiToggleX + toggleButtonWidth / 2).attr("y", toggleButtonY + toggleButtonHeight / 2 + 4)
+            .attr("text-anchor", "middle").attr("fill", "#fff").style("font-size", "12px").style("pointer-events", "none")
+            .text(useCpiAdjustment ? "CPI On" : "CPI Off");
+
+        // Real Wage Scaling Toggle
+        chartGroup.append("rect")
+            .attr("x", wageToggleX).attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth).attr("height", toggleButtonHeight)
+            .attr("rx", 5).attr("ry", 5)
+            .attr("fill", useRealWageScaling ? "#ff646c" : "#444") // Red for wage
+            .attr("cursor", "pointer").attr("class", "wage-toggle-btn")
+            .on("click", () => handleAdjustmentToggle('wage'))
+            .on("mouseover", (event) => {
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible').style('left', `${event.pageX}px`).style('top', `${event.pageY - 40}px`)
+                    .html(`<div style="text-align: center; padding: 5px;"><strong>Wage Scaling</strong></div>
+                           <div style="padding: 5px;"><strong>Off:</strong> No wage scaling.<br>
+                           <strong>On, CPI Off:</strong> Scales MSRP by nominal wage change.<br>
+                           <strong>On, CPI On:</strong> Scales MSRP by real wage change.<br>
+                           <span style="font-size: 0.9em; color: #aaa;">Base year: 2024</span></div>`);
+            })
+            .on("mouseout", () => d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden'));
+        chartGroup.append("text")
+            .attr("x", wageToggleX + toggleButtonWidth / 2).attr("y", toggleButtonY + toggleButtonHeight / 2 + 4)
+            .attr("text-anchor", "middle").attr("fill", "#fff").style("font-size", "12px").style("pointer-events", "none")
+            .text(useRealWageScaling ? "Wage On" : "Wage Off");
+
+        // Die Calculation Toggle
+        chartGroup.append("rect")
+            .attr("x", dieToggleX).attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth).attr("height", toggleButtonHeight)
+            .attr("rx", 5).attr("ry", 5)
+            .attr("fill", useEffectiveDieSize ? "#646cff" : "#444")
+            .attr("cursor", "pointer").attr("class", "die-toggle-btn")
+            .on("click", () => setUseEffectiveDieSize(!useEffectiveDieSize))
+            .on("mouseover", (event) => {
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible').style('left', `${event.pageX}px`).style('top', `${event.pageY - 40}px`)
+                    .html(`<div style="text-align: center; padding: 5px;"><strong>Die Price Calculation</strong></div>
+                           <div style="padding: 5px;"><strong>Full Die:</strong> Uses total die area.<br>
+                           <strong>Disabled Die:</strong> Accounts for partially disabled dies (30% fixed + 70% linear scaling).</div>`);
+            })
+            .on("mouseout", () => d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden'));
+        chartGroup.append("text")
+            .attr("x", dieToggleX + toggleButtonWidth / 2).attr("y", toggleButtonY + toggleButtonHeight / 2 + 4)
+            .attr("text-anchor", "middle").attr("fill", "#fff").style("font-size", "12px").style("pointer-events", "none")
+            .text(useEffectiveDieSize ? "Disabled Die" : "Full Die");
+
+
+        // --- Data Processing ---
+        // Function to calculate adjustment multiplier based on year and toggles
+        const getAdjustmentMultiplier = (yearStr) => {
+             const year = yearStr.toString();
+             let multiplier = 1;
+             let type = 'Nominal';
+
+             const baseRealWage = medianRealWageData["2024"] || 373;
+             const baseCPI = inflationData.cpi_data["2024"] || 313.2;
+             const yearRealWage = medianRealWageData[year];
+             const yearCPI = inflationData.cpi_data[year];
+             const cpiMultiplier = inflationData.multipliers[year];
+             const baseNominalWage = baseRealWage * (baseCPI / 100);
+             const yearNominalWage = yearRealWage && yearCPI ? yearRealWage * (yearCPI / 100) : null;
+
+             if (useCpiAdjustment && useRealWageScaling) {
+                 if (yearRealWage && baseRealWage && yearRealWage > 0) {
+                     multiplier = baseRealWage / yearRealWage;
+                     type = 'Real Wage (to 2024)';
+                 } else { type = 'Nominal (Wage Data Missing)'; }
+             } else if (useCpiAdjustment && !useRealWageScaling) {
+                 if (cpiMultiplier) {
+                     multiplier = cpiMultiplier;
+                     type = `CPI Adj. (to ${inflationData.base_year})`;
+                 }
+             } else if (!useCpiAdjustment && useRealWageScaling) {
+                 if (yearNominalWage && baseNominalWage && yearNominalWage > 0) {
+                     multiplier = baseNominalWage / yearNominalWage;
+                     type = 'Nominal Wage (to 2024)';
+                 } else { type = 'Nominal (Wage Data Missing)'; }
+             }
+             return { multiplier, type };
+        };
+
+        // Process GPU data
         const processedData = gpuData
             .filter(gpu => {
-                // Check if the generation is active based on the series name
-                if (activeGenerations && activeGenerations[gpu.series] === false) {
-                    return false;
-                }
-
-                // Check if we have the die information and required data points
+                if (activeGenerations && activeGenerations[gpu.series] === false) return false;
                 const dieInfo = gpuDieData[gpu.dieName];
-                return gpu.msrp && dieInfo && dieInfo.dieSizeMM2 && gpu.releaseYear; // Ensure releaseYear exists for sorting
+                return gpu.msrp && dieInfo && dieInfo.dieSizeMM2 && gpu.releaseYear;
             })
             .map(gpu => {
                 const dieInfo = gpuDieData[gpu.dieName];
-
-                // Calculate the die utilization ratio (how much of the full die is being used)
                 const fullCudaCores = dieInfo.fullCudaCores || 0;
                 const actualCudaCores = gpu.cudaCores || 0;
                 const dieUtilizationRatio = fullCudaCores > 0 ? actualCudaCores / fullCudaCores : 1;
-                
-                // Calculate effective die area (the portion that's active based on CUDA core ratio)
-                // Using a formula that balances linear and non-linear scaling of die area to cores
-                // Most chip components scale linearly while some (like cache, I/O) remain constant
                 const effectiveDieSize = dieInfo.dieSizeMM2 * (0.3 + 0.7 * dieUtilizationRatio);
 
-                // Determine the adjustment multiplier and type based on toggles
-                const year = gpu.releaseYear.toString();
-                let adjustmentMultiplier = 1;
-                let adjustmentType = 'Nominal'; // For tooltip
-                let adjustedMsrp = gpu.msrp; // Start with nominal MSRP
-
-                // Get base year real wage and CPI data
-                const baseRealWage = medianRealWageData["2024"] || 373; // Latest year as base, fallback value
-                const baseCPI = inflationData.cpi_data["2024"] || 313.2; // Latest year CPI data
-                
-                // Get release year data
-                const yearRealWage = medianRealWageData[year];
-                const yearCPI = inflationData.cpi_data[year];
-                const cpiMultiplier = inflationData.multipliers[year];
-                
-                // Calculate nominal wages (if needed) by reversing the CPI adjustment from real wages
-                // nominal wage = real wage * (CPI_year / CPI_base)
-                const baseNominalWage = baseRealWage * (baseCPI / 100);
-                const yearNominalWage = yearRealWage ? yearRealWage * (yearCPI / 100) : null;
-                
-                // Four possible states based on toggle combinations:
-                if (useCpiAdjustment && useRealWageScaling) {
-                    // Real wage adjustment (both toggles ON)
-                    // Use real wage data directly
-                    if (yearRealWage && baseRealWage && yearRealWage > 0) {
-                        adjustmentMultiplier = baseRealWage / yearRealWage;
-                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
-                        adjustmentType = 'Real Wage (to 2024)';
-                    } else {
-                        adjustmentType = 'Nominal (Wage Data Missing)';
-                    }
-                } else if (useCpiAdjustment && !useRealWageScaling) {
-                    // CPI adjustment only (inflation adjustment)
-                    if (cpiMultiplier) {
-                        adjustmentMultiplier = cpiMultiplier;
-                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
-                        adjustmentType = `CPI Adj. (to ${inflationData.base_year})`;
-                    }
-                } else if (!useCpiAdjustment && useRealWageScaling) {
-                    // Nominal wage adjustment (requires calculating nominal wages)
-                    if (yearNominalWage && baseNominalWage && yearNominalWage > 0) {
-                        adjustmentMultiplier = baseNominalWage / yearNominalWage;
-                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
-                        adjustmentType = 'Nominal Wage (to 2024)';
-                    } else {
-                        adjustmentType = 'Nominal (Wage Data Missing)';
-                    }
-                }
-                // If both toggles are OFF, adjustedMsrp remains gpu.msrp and type is 'Nominal'
+                const { multiplier: adjustmentMultiplier, type: adjustmentType } = getAdjustmentMultiplier(gpu.releaseYear);
+                const adjustedMsrp = gpu.msrp * adjustmentMultiplier;
 
                 return {
                     ...gpu,
@@ -355,964 +263,551 @@ function DieAreaPlot({
                     dieUtilizationRatio: dieUtilizationRatio,
                     effectiveDieSize: effectiveDieSize,
                     generation: dieInfo.generation || "Unknown",
-                    adjustmentMultiplier: adjustmentMultiplier, // Store the used multiplier
-                    adjustmentType: adjustmentType, // Store the type for tooltip
+                    adjustmentMultiplier: adjustmentMultiplier,
+                    adjustmentType: adjustmentType,
                     originalMsrp: gpu.msrp,
-                    adjustedMsrp: adjustedMsrp, // This is the value used for calculations now
-                    // Calculate price/mm² based on adjusted MSRP
+                    adjustedMsrp: adjustedMsrp,
                     pricePerMM2: adjustedMsrp / dieInfo.dieSizeMM2,
                     effectivePricePerMM2: adjustedMsrp / effectiveDieSize,
-                    // Raw (nominal) values remain for reference
                     rawPricePerMM2: gpu.msrp / dieInfo.dieSizeMM2,
                     rawEffectivePricePerMM2: gpu.msrp / effectiveDieSize,
-                    // Determine which price/mm² metric to display based on die size toggle
-                    displayPricePerMM2: useEffectiveDieSize ? (adjustedMsrp / effectiveDieSize) : (adjustedMsrp / dieInfo.dieSizeMM2)
+                    displayPricePerMM2: useEffectiveDieSize ? (adjustedMsrp / effectiveDieSize) : (adjustedMsrp / dieInfo.dieSizeMM2),
+                    // Add manufacturing node for wafer price linkage
+                    manufacturingNode: gpu.manufacturingNode
                 };
             });
 
-        // Get unique series from processed data, sorted by release year
-        const seriesInfo = Array.from(
-            new Set(processedData.map(d => d.series))
-        ).map(series => {
-            // Find earliest card of this series to get its first release year
-            const seriesCards = processedData.filter(d => d.series === series);
-            const earliestYear = seriesCards.length > 0 ? 
-                Math.min(...seriesCards.map(card => card.releaseYear)) : 0;
-            return {
-                series,
-                releaseYear: earliestYear // Use the earliest release year in the series
-            };
-        }).sort((a, b) => a.releaseYear - b.releaseYear);
+        // --- X Axis Setup (Generations) ---
+        const seriesInfo = Array.from(new Set(processedData.map(d => d.series)))
+            .map(series => {
+                const seriesCards = processedData.filter(d => d.series === series);
+                const earliestYear = seriesCards.length > 0 ? Math.min(...seriesCards.map(card => card.releaseYear)) : 0;
+                 const firstCard = seriesCards.sort((a, b) => a.releaseYear - b.releaseYear)[0];
+                 const manufacturingNode = firstCard ? firstCard.manufacturingNode : null;
+                return { series, releaseYear: earliestYear, manufacturingNode };
+            }).sort((a, b) => a.releaseYear - b.releaseYear);
 
-        // Combine 1600 and 2000 series into a single x-axis tick
-        // but keep them separate in the data for coloring
+        // Combine 1600/2000 series for X-axis tick
         const combinedSeriesInfo = seriesInfo.filter(info => info.series !== "1600" && info.series !== "2000");
-
-        // Add the combined 1600/2000 entry where 2000 would be
         const has1600 = seriesInfo.some(info => info.series === "1600");
         const has2000 = seriesInfo.some(info => info.series === "2000");
-
         if (has1600 || has2000) {
-            // Find the correct position based on the earlier series sorting
             const series1600 = seriesInfo.find(info => info.series === "1600");
             const series2000 = seriesInfo.find(info => info.series === "2000");
-            const releaseYear = series2000 ? series2000.releaseYear : (series1600 ? series1600.releaseYear : 2018); // Use actual year if available, fallback to 2018
+            const releaseYear = series2000 ? series2000.releaseYear : (series1600 ? series1600.releaseYear : 2018);
+            const manufacturingNode = series2000 ? series2000.manufacturingNode : (series1600 ? series1600.manufacturingNode : null);
 
-             // Determine the insertion index based on sorted combinedSeriesInfo
-            // Find where the 2000 series (or 1600 if 2000 is missing) would fit chronologically
-             let insertIndex = combinedSeriesInfo.length; // Default to end
-             if (series2000) {
-                 insertIndex = combinedSeriesInfo.findIndex(info => info.releaseYear > series2000.releaseYear);
-                 if (insertIndex === -1) insertIndex = combinedSeriesInfo.length; // Insert at end if no later series
-             } else if (series1600) {
-                  insertIndex = combinedSeriesInfo.findIndex(info => info.releaseYear > series1600.releaseYear);
-                 if (insertIndex === -1) insertIndex = combinedSeriesInfo.length; // Insert at end
-             }
+            let insertIndex = combinedSeriesInfo.length;
+            if (series2000) insertIndex = combinedSeriesInfo.findIndex(info => info.releaseYear > series2000.releaseYear);
+            else if (series1600) insertIndex = combinedSeriesInfo.findIndex(info => info.releaseYear > series1600.releaseYear);
+            if (insertIndex === -1) insertIndex = combinedSeriesInfo.length;
 
-
-            // Create a combined entry and insert it
             combinedSeriesInfo.splice(insertIndex, 0, {
-                series: "1600/2000",
-                releaseYear: releaseYear,
-                isCombo: true,
-                series1: "1600",
-                series2: "2000"
+                series: "1600/2000", releaseYear, manufacturingNode, isCombo: true, series1: "1600", series2: "2000"
             });
         }
 
-        // The list is already sorted by release year due to how we built combinedSeriesInfo
+        const xScaleDomain = combinedSeriesInfo.length > 0 ? combinedSeriesInfo.map(info => info.series) : ["No Data"];
 
-        // Extract just the series names in the correct order for x-axis domain
-        const xScaleDomain = combinedSeriesInfo.map(info => info.series);
-        if (xScaleDomain.length === 0 && processedData.length > 0) {
-             // Fallback domain if combining somehow resulted in empty array, but data exists
-             console.warn("xScaleDomain is empty after combining. Using all unique series from processed data.");
-             const fallbackSeries = Array.from(new Set(processedData.map(d => d.series)))
-                 .map(series => {
-                     const firstCard = processedData.find(d => d.series === series);
-                     return { series, releaseYear: firstCard ? firstCard.releaseYear : 0 };
-                 })
-                 .sort((a, b) => a.releaseYear - b.releaseYear)
-                 .map(info => info.series);
-             xScaleDomain.push(...fallbackSeries);
-        }
-        if (xScaleDomain.length === 0) xScaleDomain.push("No Data"); // Ensure domain is never empty
-
-
-        // Create a mapping of series (including combined) to their release years for the labels
         const seriesToYear = {};
+        const seriesToNode = {}; // Map display series name to manufacturing node
         combinedSeriesInfo.forEach(info => {
             seriesToYear[info.series] = info.releaseYear;
+            seriesToNode[info.series] = info.manufacturingNode;
         });
 
-        // Create a mapping from original series to their display position key (used for scatter points)
+        // Map original series name to its X-axis display key
         const seriesPositionMapping = {};
         processedData.forEach(d => {
-            if (d.series === "1600" || d.series === "2000") {
-                seriesPositionMapping[d.series] = "1600/2000";
-            } else {
-                seriesPositionMapping[d.series] = d.series;
-            }
+            if (d.series === "1600" || d.series === "2000") seriesPositionMapping[d.series] = "1600/2000";
+            else seriesPositionMapping[d.series] = d.series;
         });
 
+        const xScale = d3.scalePoint().domain(xScaleDomain).range([0, width]).padding(0.5);
 
-        // X scale for GPU generations (series)
-        const xScale = d3.scalePoint()
-            .domain(xScaleDomain)
-            .range([0, width])
-            .padding(0.5);
+        // --- Y Axis Setup (Primary - GPU Price/mm²) ---
+        const maxGpuPrice = max(processedData, d => d.displayPricePerMM2) || 5;
+        const yMaxGpu = Math.ceil((maxGpuPrice || 5) * 1.1); // Max for GPU data only, add padding
+        const yScale = d3.scaleLinear().domain([0, yMaxGpu]).range([height, 0]);
 
-        // Find maximum price per mm²
-        const maxPricePerMM2 = max(processedData, d => d.pricePerMM2) || 5;
-        // Round up to a nice value, ensuring it's at least 5
-        const yMax = Math.max(4, Math.ceil(maxPricePerMM2 * 1.1)); // Give some padding
+        // --- Prepare Wafer Data (Needed for both axes and area plot) ---
+        let waferAreaData = []; // Initialize empty
+        let maxWaferPrice = 0; // Initialize max wafer price
 
-        // Y scale for price per mm²
-        const yScale = d3.scaleLinear()
-            .domain([0, yMax])
-            .range([height, 0]);
+        if (showWaferPriceArea && processedData.length > 0) {
+            waferAreaData = combinedSeriesInfo
+                .map(info => {
+                    const node = info.manufacturingNode;
+                    const year = info.releaseYear;
+                    const seriesKey = info.series;
 
-        // --- Axes ---
-        // X-Axis (GPU Generations)
-        const xAxis = d3.axisBottom(xScale)
-            .tickFormat(d => ""); // Empty string as we'll add custom labels
+                    if (!node || !year || !waferPrices[node] || !xScale(seriesKey)) return null;
 
-        const xAxisGroup = chartGroup.append("g")
-            .attr("class", "x-axis")
-            .attr("transform", `translate(0,${height})`)
-            .call(xAxis);
+                    const yieldFactor = { 40: 0.85, 28: 0.80, 16: 0.75, 12: 0.70, 8: 0.65, 5: 0.60 };
+                    const effectiveArea = 70686 * (yieldFactor[node] || 0.7);
+                    if (effectiveArea <= 0) return null;
 
-        // Add two-line labels with series and year
-        xAxisGroup.selectAll(".tick")
-            .append("text")
-            .attr("y", 15)
-            .attr("x", 0)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#ddd")
-            .style("font-size", "12px")
-            .text(d => d); // First line: GPU series name (e.g., "500" or "1600/2000")
+                    const basePricePerMM2 = waferPrices[node] / effectiveArea;
+                    const { multiplier, type } = getAdjustmentMultiplier(year);
+                    const adjustedPricePerMM2 = basePricePerMM2 * multiplier;
 
-        xAxisGroup.selectAll(".tick")
-            .append("text")
-            .attr("y", 30)
-            .attr("x", 0)
-            .attr("text-anchor", "middle")
-            .attr("fill", "#aaa")
-            .style("font-size", "10px")
-            .text(d => seriesToYear[d]); // Second line: release year
-
-        // Add X axis label
-        chartGroup.append("text")
-            .attr("class", "x-axis-label")
-            .attr("text-anchor", "middle")
-            .attr("x", width / 2)
-            .attr("y", height + 50) // Adjusted for two-line labels
-            .attr("fill", "#ddd")
-            .style("font-size", "12px")
-            .text("GPU Generation");
-
-        // Y-Axis (Price per mm²)
-        const yAxis = d3.axisLeft(yScale)
-            .tickFormat(d => `$${d}`);
-
-        chartGroup.append("g")
-            .attr("class", "y-axis")
-            .call(yAxis);
-
-        // Determine Y-axis label based on adjustment
-        let yAxisLabelText = "Price per Die Area ($/mm²)";
-        
-        if (useCpiAdjustment && useRealWageScaling) {
-            yAxisLabelText = "Price per Die Area ($/mm², Scaled by Real Wage vs 2024)";
-        } else if (useCpiAdjustment && !useRealWageScaling) {
-            yAxisLabelText = `Price per Die Area ($/mm², ${inflationData.base_year} USD)`;
-        } else if (!useCpiAdjustment && useRealWageScaling) {
-            yAxisLabelText = "Price per Die Area ($/mm², Scaled by Nominal Wage vs 2024)";
-        }
-
-
-        // Add Y axis label
-        chartGroup.append("text")
-            .attr("class", "y-axis-label")
-            .attr("text-anchor", "middle")
-            .attr("transform", "rotate(-90)")
-            .attr("y", -55)
-            .attr("x", -height / 2)
-            .attr("fill", "#ddd")
-            .style("font-size", "12px")
-            .text(yAxisLabelText); // Use dynamic label
-
-        // Y-Axis Gridlines
-        const yGridlines = d3.axisLeft(yScale)
-            .tickSize(-width)
-            .tickFormat("");
-
-        chartGroup.append("g")
-            .attr("class", "grid")
-            .call(yGridlines)
-            .selectAll("line")
-                .attr("stroke", "#e0e0e0")
-                .attr("stroke-opacity", 0.15); // Make gridlines subtle
-        chartGroup.select(".grid .domain").remove(); // Remove the vertical line of the grid
-
-        // Display "No data" message if no GPU data is available but keep the chart structure
-        if (processedData.length === 0) {
-            chartGroup.append("text")
-                .attr("x", width / 2)
-                .attr("y", height / 2)
-                .attr("text-anchor", "middle")
-                .attr("fill", "#ddd")
-                .style("font-size", "14px")
-                .text("No data to display based on current filters.");
-        }
-
-        // Get ALL series from the original data regardless of filtering for legend display
-        const allGenerationsWithInfo = Array.from(new Set(
-            gpuData
-                .filter(gpu => {
-                    // Only include GPUs with die data and MSRP for potential plotting
-                    const dieInfo = gpuDieData[gpu.dieName];
-                    return gpu.msrp && dieInfo && dieInfo.dieSizeMM2 && gpu.releaseYear;
+                    // Store the raw price for potential use, and the adjusted one for plotting
+                    return {
+                        series: seriesKey,
+                        node: node,
+                        year: year,
+                        xPos: xScale(seriesKey),
+                        pricePerMM2: adjustedPricePerMM2, // Use adjusted price for scaling/plotting
+                        adjustmentType: type
+                    };
                 })
-                .map(gpu => gpu.series)
-        ))
-        .map(series => {
-            // Find the first card of this series to get its release year and generation
-            const firstCard = gpuData.find(d => d.series === series && gpuDieData[d.dieName]);
-            const dieInfo = firstCard ? gpuDieData[firstCard.dieName] : null;
-            return {
-                series,
-                releaseYear: firstCard ? firstCard.releaseYear : 0,
-                generation: dieInfo ? dieInfo.generation : "Unknown"
-            };
-        })
-        .sort((a, b) => a.releaseYear - b.releaseYear); // Sort all potential generations by year
+                .filter(d => d !== null && isFinite(d.pricePerMM2) && d.pricePerMM2 >= 0);
 
-        // Extract just the series names in the correct order for ALL generations
+            // Calculate max wafer price AFTER adjustments
+            maxWaferPrice = max(waferAreaData, d => d.pricePerMM2) || 0;
+
+            // Sort by X position for drawing the area/labels
+            waferAreaData.sort((a, b) => a.xPos - b.xPos);
+        }
+
+        // --- Y Axis Setup (Secondary - Wafer Price/mm²) ---
+        const yMaxWafer = Math.ceil((maxWaferPrice || 1) / 0.10) * 0.10;
+        const yScaleWafer = d3.scaleLinear().domain([0, yMaxWafer]).range([height, 0]);
+
+
+        // --- Draw Axes ---
+        // X-Axis
+        const xAxis = d3.axisBottom(xScale).tickFormat("");
+        const xAxisGroup = chartGroup.append("g").attr("class", "x-axis").attr("transform", `translate(0,${height})`).call(xAxis);
+        xAxisGroup.selectAll(".tick").append("text").attr("y", 15).attr("x", 0).attr("text-anchor", "middle").attr("fill", "#ddd").style("font-size", "12px").text(d => d);
+        xAxisGroup.selectAll(".tick").append("text").attr("y", 30).attr("x", 0).attr("text-anchor", "middle").attr("fill", "#aaa").style("font-size", "10px").text(d => seriesToYear[d]);
+        chartGroup.append("text").attr("class", "x-axis-label").attr("text-anchor", "middle").attr("x", width / 2).attr("y", height + 50).attr("fill", "#ddd").style("font-size", "12px").text("GPU Generation");
+
+        // Y-Axis (Primary - Left)
+        const yAxisLeft = d3.axisLeft(yScale).tickFormat(d => `$${d}`);
+        chartGroup.append("g").attr("class", "y-axis y-axis-left").call(yAxisLeft);
+        let yAxisLabelText = "GPU Price per Die Area ($/mm²)";
+        const { type: adjustmentTypeLabel } = getAdjustmentMultiplier("2024");
+        if (adjustmentTypeLabel.includes('Real Wage')) yAxisLabelText = "GPU Price/Area ($/mm², Scaled by Real Wage vs 2024)";
+        else if (adjustmentTypeLabel.includes('CPI Adj.')) yAxisLabelText = `GPU Price/Area ($/mm², ${inflationData.base_year} USD)`;
+        else if (adjustmentTypeLabel.includes('Nominal Wage')) yAxisLabelText = "GPU Price/Area ($/mm², Scaled by Nominal Wage vs 2024)";
+        chartGroup.append("text").attr("class", "y-axis-label").attr("text-anchor", "middle").attr("transform", "rotate(-90)").attr("y", -55).attr("x", -height / 2).attr("fill", "#ddd").style("font-size", "12px").text(yAxisLabelText);
+
+        // Y-Axis (Secondary - Right, only if wafer data shown)
+        if (showWaferPriceArea && waferAreaData.length > 0) {
+            const yAxisRight = d3.axisRight(yScaleWafer).tickFormat(d => `$${d.toFixed(2)}`).ticks(5); // Fewer ticks might be good
+            chartGroup.append("g")
+                .attr("class", "y-axis y-axis-right")
+                .attr("transform", `translate(${width}, 0)`)
+                .call(yAxisRight)
+                .selectAll("text") // Style the tick labels
+                .attr("fill", "#aaaaaa"); // Muted color for secondary axis
+
+            chartGroup.append("text")
+                .attr("class", "y-axis-label-right")
+                .attr("text-anchor", "middle")
+                .attr("transform", `translate(${width + 45}, ${height / 2}) rotate(90)`) // Position and rotate
+                .attr("fill", "#aaaaaa") // Muted color
+                .style("font-size", "12px")
+                .text("Est. Wafer Price ($/mm²)"); // Label for the right axis
+        }
+
+
+        // Gridlines (Based on Primary Left Axis)
+        const yGridlines = d3.axisLeft(yScale).tickSize(-width).tickFormat("");
+        chartGroup.append("g").attr("class", "grid").call(yGridlines).selectAll("line").attr("stroke", "#e0e0e0").attr("stroke-opacity", 0.15);
+        chartGroup.select(".grid .domain").remove();
+
+        // --- Legend ---
+        const allGenerationsWithInfo = Array.from(new Set(gpuData.filter(gpu => gpuDieData[gpu.dieName]).map(gpu => gpu.series)))
+            .map(series => {
+                const firstCard = gpuData.find(d => d.series === series && gpuDieData[d.dieName]);
+                const dieInfo = firstCard ? gpuDieData[firstCard.dieName] : null;
+                return { series, releaseYear: firstCard ? firstCard.releaseYear : 0, generation: dieInfo ? dieInfo.generation : "Unknown" };
+            })
+            .sort((a, b) => a.releaseYear - b.releaseYear);
         const allGenerations = allGenerationsWithInfo.map(g => g.series);
-
-        // Use consistent color scale across all potential generations from the original data
         const colorScale = d3.scaleOrdinal(d3.schemeCategory10).domain(allGenerations);
 
+        // Adjust legend position due to increased right margin
+        const dieAreaLegend = chartGroup.append("g").attr("class", "die-area-legend").attr("transform", `translate(${width + 70}, 0)`);
+        dieAreaLegend.append("text").attr("x", 60).attr("y", -20).attr("font-size", "14px").attr("font-weight", "bold").attr("fill", "#ddd").attr("text-anchor", "middle").text("GPU Generation");
 
-        // Add legend for die area plot - moved outside of processedData.length check to ensure it's always visible
-        const dieAreaLegend = chartGroup.append("g")
-            .attr("class", "die-area-legend")
-            .attr("transform", `translate(${width + 20}, 0)`);
-
-        // Add "GPU Generation" title to legend
-        dieAreaLegend.append("text")
-            .attr("x", 60)
-            .attr("y", -20)
-            .attr("font-size", "14px")
-            .attr("font-weight", "bold")
-            .attr("fill", "#ddd")
-            .attr("text-anchor", "middle")
-            .text("GPU Generation");
-
-        // Use allGenerationsWithInfo for the legend data, sorted by release year initially
-        const legendData = allGenerationsWithInfo.slice();
-        
-        // Ensure 1600 comes directly above 2000 in the legend
-        legendData.sort((a, b) => {
-            // Special case for 1600 and 2000 series
-            if (a.series === "1600" && b.series === "2000") {
-                return -1; // 1600 comes before 2000
-            }
-            if (a.series === "2000" && b.series === "1600") {
-                return 1; // 2000 comes after 1600
-            }
-            // Default sort by release year for other items
+        const legendData = allGenerationsWithInfo.slice().sort((a, b) => {
+            if (a.series === "1600" && b.series === "2000") return -1;
+            if (a.series === "2000" && b.series === "1600") return 1;
             return a.releaseYear - b.releaseYear;
         });
 
-        // Create legend items
-        const legendItems = dieAreaLegend.selectAll(".legend-item")
-            .data(legendData)
-            .enter().append("g")
-            .attr("class", "legend-item")
-            .attr("transform", (d, i) => `translate(0, ${i * 25})`);
+        const legendItems = dieAreaLegend.selectAll(".legend-item").data(legendData).enter().append("g")
+            .attr("class", "legend-item").attr("transform", (d, i) => `translate(0, ${i * 25})`);
 
-        // Color rectangle with toggle functionality
-        legendItems.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", 15)
-            .attr("height", 15)
-            // Check activeGenerations state for this specific series name
+        const toggleGeneration = (event, d) => {
+             if (setActiveGenerations && setShowAllDieGenerations) {
+                 setActiveGenerations(prev => {
+                     const newState = { ...prev, [d.series]: prev[d.series] === false ? true : false };
+                     const allAreSelected = allGenerations.every(gen => newState[gen] !== false);
+                     setShowAllDieGenerations(allAreSelected);
+                     return newState;
+                 });
+             }
+        };
+
+        legendItems.append("rect").attr("x", 0).attr("y", 0).attr("width", 15).attr("height", 15)
             .attr("fill", d => activeGenerations[d.series] !== false ? colorScale(d.series) : "#555")
-            .attr("stroke", "#ddd")
-            .attr("stroke-width", 1)
-            .attr("rx", 3)
-            .attr("ry", 3)
-            .attr("cursor", "pointer")
-            // Use opacity to indicate active/inactive state
+            .attr("stroke", "#ddd").attr("stroke-width", 1).attr("rx", 3).attr("ry", 3).attr("cursor", "pointer")
             .attr("opacity", d => activeGenerations[d.series] !== false ? 1 : 0.5)
-            .on("click", function(event, d) {
-                if (setActiveGenerations && setShowAllDieGenerations) {
-                    // Use the original series name for updating the state
-                    setActiveGenerations(prev => {
-                        const newState = {
-                            ...prev,
-                            [d.series]: prev[d.series] === false ? true : false
-                        };
+            .on("click", toggleGeneration);
 
-                        // Logic to update showAllDieGenerations based on ALL generations
-                        const allAreSelected = allGenerations.every(gen => newState[gen] !== false);
-                        setShowAllDieGenerations(allAreSelected);
-
-                        return newState;
-                    });
-                }
-            });
-
-        // Series name with toggle functionality
-        legendItems.append("text")
-            .attr("x", 20)
-            .attr("y", 12)
-            // Display original series name and generation
-            .text(d => `${d.series} (${d.generation})`)
-            .style("font-size", "12px")
-            .style("font-weight", "bold")
-            // Use color to indicate active/inactive state
+        legendItems.append("text").attr("x", 20).attr("y", 12).text(d => `${d.series} (${d.generation})`)
+            .style("font-size", "12px").style("font-weight", "bold")
             .attr("fill", d => activeGenerations[d.series] !== false ? "#ddd" : "#777")
             .attr("cursor", "pointer")
-            .on("click", function(event, d) {
-                if (setActiveGenerations && setShowAllDieGenerations) {
-                    // Use the original series name for updating the state
-                    setActiveGenerations(prev => {
-                        const newState = {
-                            ...prev,
-                            [d.series]: prev[d.series] === false ? true : false
-                        };
+            .on("click", toggleGeneration);
 
-                        // Logic to update showAllDieGenerations based on ALL generations
-                        const allAreSelected = allGenerations.every(gen => newState[gen] !== false);
-                        setShowAllDieGenerations(allAreSelected);
+        // Show All Checkbox
+        const showAllGroup = dieAreaLegend.append("g").attr("class", "legend-item show-all")
+            .attr("transform", `translate(0, ${legendData.length * 25 + 10})`);
+        const toggleShowAll = () => {
+             if (setActiveGenerations && setShowAllDieGenerations) {
+                 const targetState = !showAllDieGenerations;
+                 const newState = {};
+                 allGenerations.forEach(gen => { newState[gen] = targetState; });
+                 setActiveGenerations(newState);
+                 setShowAllDieGenerations(targetState);
+             }
+        };
+        showAllGroup.append("rect").attr("x", 0).attr("y", 0).attr("width", 15).attr("height", 15)
+            .attr("stroke", "#ddd").attr("fill", showAllDieGenerations ? "#646cff" : "transparent")
+            .attr("rx", 3).attr("ry", 3).attr("cursor", "pointer")
+            .on("click", toggleShowAll);
+        showAllGroup.append("text").attr("x", 25).attr("y", 12).attr("fill", "#ddd").style("font-size", "12px")
+            .text("Show All Generations").attr("alignment-baseline", "middle").attr("cursor", "pointer")
+            .on("click", toggleShowAll);
 
-                        return newState;
-                    });
-                }
-            });
-
-        // Add "Show All Generations" checkbox
-        const showAllGroup = dieAreaLegend.append("g")
-            .attr("class", "legend-item show-all")
-            .attr("transform", `translate(0, ${legendData.length * 25 + 10})`); // Position below legend items
-
-        showAllGroup.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", 15)
-            .attr("height", 15)
-            .attr("stroke", "#ddd")
-            .attr("fill", showAllDieGenerations ? "#646cff" : "transparent")
-            .attr("rx", 3)
-            .attr("ry", 3)
-            .attr("cursor", "pointer")
-            .on("click", function() {
-                if (setActiveGenerations && setShowAllDieGenerations) {
-                    const targetState = !showAllDieGenerations;
-
-                    const newState = {};
-                    // Iterate over *all* possible generations from the original data
-                    allGenerations.forEach(gen => {
-                        newState[gen] = targetState; // Set all to the target state
-                    });
-                    setActiveGenerations(newState);
-                    setShowAllDieGenerations(targetState);
-                }
-            });
-
-        showAllGroup.append("text")
-            .attr("x", 25)
-            .attr("y", 12)
-            .attr("fill", "#ddd")
-            .style("font-size", "12px")
-            .text("Show All Generations")
-            .attr("alignment-baseline", "middle")
-            .attr("cursor", "pointer") // Make text clickable too
-            .on("click", function() { // Duplicate click handler for text
-                if (setActiveGenerations && setShowAllDieGenerations) {
-                    const targetState = !showAllDieGenerations;
-
-                    const newState = {};
-                    // Iterate over *all* possible generations from the original data
-                    allGenerations.forEach(gen => {
-                        newState[gen] = targetState; // Set all to the target state
-                    });
-                    setActiveGenerations(newState);
-                    setShowAllDieGenerations(targetState);
-                }
-            });
+        // Legend Notes
+        dieAreaLegend.append("text").attr("x", 0).attr("y", legendData.length * 25 + 50).attr("fill", "#aaa").style("font-size", "11px").text("* Colors represent GPU generations");
+        dieAreaLegend.append("text").attr("x", 0).attr("y", legendData.length * 25 + 75).attr("fill", "#aaa").style("font-size", "11px").text("* Point sizes proportional");
+        dieAreaLegend.append("text").attr("x", 0).attr("y", legendData.length * 25 + 90).attr("fill", "#aaa").style("font-size", "11px").attr("dx", 8.5).text("to die area (mm²)");
 
 
-        // Add note about the data below the show all option
-        dieAreaLegend.append("text")
-            .attr("x", 0)
-            .attr("y", legendData.length * 25 + 50) // Position below show all
-            .attr("fill", "#aaa")
-            .style("font-size", "11px")
-            .text("* Colors represent GPU generations");
+        // --- Draw Wafer Price Background Area & Node Labels (if enabled) ---
+        if (showWaferPriceArea && waferAreaData.length > 0) {
+             // Define the area generator using the SECONDARY (wafer) Y scale
+             const waferArea = d3.area()
+                 .x(d => d.xPos)
+                 .y0(height) // Bottom of the area is the x-axis
+                 .y1(d => yScaleWafer(Math.min(d.pricePerMM2, yMaxWafer))) // Use wafer scale, clamp to wafer max
+                 .curve(d3.curveMonotoneX);
 
-        dieAreaLegend.append("text")
-            .attr("x", 0)
-            .attr("y", legendData.length * 25 + 75) // Position below show all
-            .attr("fill", "#aaa")
-            .style("font-size", "11px")
-            .text("* Point sizes are proportional");
+             // Draw the area
+             chartGroup.append("path")
+                 .datum(waferAreaData)
+                 .attr("class", "wafer-price-area")
+                 .attr("fill", "#cccccc") // Neutral light gray
+                 .attr("fill-opacity", 0.25) // Slightly reduced opacity
+                 .attr("stroke", "none") // No outline
+                 .attr("d", waferArea);
 
-        dieAreaLegend.append("text")
-            .attr("x", 0)
-            .attr("y", legendData.length * 25 + 90) // Position below show all
-            .attr("fill", "#aaa")
-            .style("font-size", "11px")
-            .attr("dx", 8.5)
-            .text("to die area (mm²)");
+             // Draw Node Labels AT THE TOP of the chart area
+             chartGroup.append("g") // Group for node labels
+                 .attr("class", "wafer-node-labels-top")
+                 .selectAll(".wafer-node-label-top")
+                 .data(waferAreaData)
+                 .enter().append("text")
+                 .attr("class", "wafer-node-label-top")
+                 .attr("x", d => d.xPos)
+                 .attr("y", -10) // Position labels 10px above the chart area (0 line)
+                 .attr("text-anchor", "middle")
+                 .attr("fill", "#aaaaaa") // Muted gray color
+                 .attr("font-size", "10px")
+                 .attr("font-weight", "bold")
+                 .attr("opacity", 0.9) // Slightly transparent
+                 .text(d => `${d.node}nm`);
 
-        // For data display, only use processed (filtered) data
+        }
+
+
+        // --- Draw Violin Plots and Scatter Points (AFTER area plot) ---
         if (processedData.length > 0) {
-
-            // Group processed data by the series *key* that will be used on the X axis
+            // Group processed data by the *display* series key (e.g., "1600/2000")
             const dataByDisplaySeries = {};
             xScaleDomain.forEach(displaySeries => {
-                // For combined series, make sure we're only including active series
                 if (displaySeries === "1600/2000") {
-                    // Check which series are active (not filtered out)
-                    const has1600 = activeGenerations["1600"] !== false;
-                    const has2000 = activeGenerations["2000"] !== false;
-                    
-                    if (has1600 && has2000) {
-                        // Both are active, include both
-                        dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "1600" || d.series === "2000");
-                    } else if (has1600) {
-                        // Only 1600 is active
-                        dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "1600");
-                    } else if (has2000) {
-                        // Only 2000 is active
-                        dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "2000");
+                     const active1600 = activeGenerations["1600"] !== false;
+                     const active2000 = activeGenerations["2000"] !== false;
+                     // Handle display based on active state
+                     if (active1600 && active2000) dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "1600" || d.series === "2000");
+                     else if (active1600) dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "1600");
+                     else if (active2000) dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === "2000");
+                     else dataByDisplaySeries[displaySeries] = [];
+                } else if (displaySeries !== "No Data") {
+                    // Only include data for active generations
+                    if (activeGenerations[displaySeries] !== false) {
+                        dataByDisplaySeries[displaySeries] = processedData.filter(d => seriesPositionMapping[d.series] === displaySeries);
                     } else {
-                        // Neither are active (this shouldn't happen due to earlier filtering)
-                        dataByDisplaySeries[displaySeries] = [];
+                         dataByDisplaySeries[displaySeries] = [];
                     }
-                } else if (displaySeries !== "No Data") { // Handle the default case
-                    dataByDisplaySeries[displaySeries] = processedData.filter(d => d.series === displaySeries);
                 }
             });
 
-            // Create a series to x-coordinate mapping
+
             const seriesToX = Object.fromEntries(xScaleDomain.map(series => [series, xScale(series)]));
 
-
-            // Draw violin plots per display series key
+            // Draw violin plots per display series key (Original Logic - Uses primary yScale)
             Object.entries(dataByDisplaySeries).forEach(([displaySeriesKey, gpusInGroup]) => {
                 const seriesX = seriesToX[displaySeriesKey];
+                 if (!seriesX && seriesX !== 0 || gpusInGroup.length === 0) { // Skip if series not found or group is empty
+                     return;
+                 }
 
-                // Filter for valid prices for KDE and stats
                 const validPrices = gpusInGroup
-                    .map(d => d.displayPricePerMM2) // Use the display price that depends on toggle state
-                    .filter(price => price != null && isFinite(price) && price >= 0 && price <= yMax); // Ensure price is finite and within y scale bounds
+                    .map(d => d.displayPricePerMM2)
+                    .filter(price => price != null && isFinite(price) && price >= 0 && price <= yMaxGpu); // Clamp to primary axis max
 
-                // Only continue if we have sufficient valid data points for a distribution
-                if (validPrices.length >= 2) { // Need at least 2 points to potentially have a spread
-
-                    // Use the imported deviation function
+                if (validPrices.length >= 2) { // Need >= 2 for deviation/KDE
                     const stdDev = deviation(validPrices);
-
-                    // Calculate dynamic bandwidth:
-                    // Use a multiple of the standard deviation.
-                    // Add a small minimum bandwidth to avoid issues if stdDev is zero but points exist.
-                    // The multiplier (e.g., 1.5) and minimum (e.g., 0.1) may need tuning.
-                    // Ensure bandwidth is positive and finite.
                     const bandwidth = Math.max(0.1, (stdDev || 0) * 1.5);
-
                     if (!isFinite(bandwidth) || bandwidth <= 0) {
-                        console.warn(`Calculated bandwidth is invalid (${bandwidth}) for ${displaySeriesKey}. Skipping violin.`);
-                        return; // Skip drawing violin if bandwidth is bad
+                         console.warn(`Invalid bandwidth (${bandwidth}) for ${displaySeriesKey}. Skipping violin.`);
+                         return;
                     }
 
-                    // Calculate fixed violin width since xScale is a point scale (not a band scale)
-                    const dynamicViolinWidth = 40; // Fixed width value for violins
+                    const dynamicViolinWidth = 40;
 
-                    // Calculate the kernel density estimation
-                    const numPoints = 100; // Increased points for smoother curves
-                    // Generate yValues across the relevant range of the data, plus padding
-                    const priceMin = min(validPrices); // Use imported min
-                    const priceMax = max(validPrices); // Use imported max
-                    const yRangeStart = Math.max(0, (priceMin || 0) - bandwidth * 2); // Extend below min
-                    const yRangeEnd = Math.min(yMax, (priceMax || yMax) + bandwidth * 2); // Extend above max
-                    const yValues = range(yRangeStart, yRangeEnd, (yRangeEnd - yRangeStart) / numPoints); // Use imported range
+                    // KDE Calculation (Uses primary yScale domain)
+                     const priceMinKDE = min(validPrices);
+                     const priceMaxKDE = max(validPrices);
+                     const yRangeStart = Math.max(0, (priceMinKDE || 0) - bandwidth * 2);
+                     const yRangeEnd = Math.min(yMaxGpu, (priceMaxKDE || yMaxGpu) + bandwidth * 2); // Clamp to primary max
+                     const numPointsKDE = 100;
+                     let yValues = range(yRangeStart, yRangeEnd, (yRangeEnd - yRangeStart) / numPointsKDE);
+                     if (yValues.length < 2) {
+                          const meanPrice = mean(validPrices) || (yMaxGpu / 2);
+                          yValues = [...new Set([Math.max(0, meanPrice - 1), meanPrice, Math.min(yMaxGpu, meanPrice + 1)])].sort(d3.ascending);
+                          if (yValues.length < 2) {
+                              console.warn(`Could not generate sufficient yValues for KDE for ${displaySeriesKey}. Skipping violin.`);
+                              return;
+                          }
+                     }
 
-                    // Ensure yValues has points if range is zero or small
-                    if (yValues.length < 2) {
-                        // Fallback to a standard range around the mean if possible
-                        const meanPrice = mean(validPrices) || (yMax / 2); // Use imported mean
-                        yValues.push(Math.max(0, meanPrice - 1));
-                        yValues.push(meanPrice);
-                        yValues.push(Math.min(yMax, meanPrice + 1));
-                        // Sort in case fallbacks are not ordered
-                         yValues.sort(d3.ascending);
-                        // Filter unique values
-                         const uniqueYValues = Array.from(new Set(yValues));
-                         if (uniqueYValues.length < 2) {
-                             console.warn(`Could not generate sufficient yValues for KDE for ${displaySeriesKey}. Skipping violin.`);
-                             return;
-                         }
-                         yValues.splice(0, yValues.length, ...uniqueYValues); // Replace yValues with unique sorted ones
-
-                    }
-
-
-                    const kde = kernelDensityEstimator(kernelEpanechnikov(bandwidth), yValues); // Use dynamic bandwidth
-
+                    const kde = kernelDensityEstimator(kernelEpanechnikov(bandwidth), yValues);
                     const density = kde(validPrices);
 
-                    // Filter density points to ensure valid data and positive values
-                    // Calculate a density threshold as a percentage of the maximum density
                     const rawMaxDensity = max(density, d => d[1] != null && isFinite(d[1]) ? d[1] : 0) || 0.001;
-                    const densityThreshold = rawMaxDensity * 0.1; // Filter out points with less than 1% of max density
-                    
-                    const validDensityPoints = density.filter(d => 
-                        d[0] != null && 
-                        isFinite(d[0]) && 
-                        d[1] != null && 
-                        isFinite(d[1]) && 
-                        d[1] >= densityThreshold // Apply threshold to remove tiny density values
+                    const densityThreshold = rawMaxDensity * 0.01;
+
+                    const validDensityPoints = density.filter(d =>
+                        d[0] != null && isFinite(d[0]) && d[1] != null && isFinite(d[1]) && d[1] >= densityThreshold
                     );
 
                     if (validDensityPoints.length < 2) {
                          console.warn(`Not enough valid density points (${validDensityPoints.length}) after KDE for ${displaySeriesKey}. Skipping violin.`);
-                         return; // Not enough points to draw a shape
+                         return;
                     }
 
-                    const maxDensity = max(validDensityPoints, d => d[1]) || 0.001; // Add a small minimum for scaling, use imported max
-                     if (maxDensity <= 0) {
-                         console.warn(`Max density is zero or negative (${maxDensity}) for ${displaySeriesKey}. Skipping violin.`);
-                         return; // Cannot scale if max density is not positive
+                    const maxDensityValue = max(validDensityPoints, d => d[1]) || 0.001;
+                     if (maxDensityValue <= 0) {
+                         console.warn(`Max density is zero or negative (${maxDensityValue}) for ${displaySeriesKey}. Skipping violin.`);
+                         return;
                      }
 
-                    const densityScale = d3.scaleLinear()
-                        .domain([0, maxDensity])
-                        .range([0, dynamicViolinWidth / 2]); // Map max density to half the violin width
+                    const densityScale = d3.scaleLinear().domain([0, maxDensityValue]).range([0, dynamicViolinWidth / 2]);
 
-                    // Build the violin path
+                    // Build violin path (Uses primary yScale)
                     const violinPath = [];
-                    // Add points from top-left down to bottom-left
-                    validDensityPoints.forEach(d => {
-                         const y = yScale(d[0]); // Scale the price value
-                         const xOffset = densityScale(d[1]); // Scale the density value
-                         violinPath.push([seriesX - xOffset, y]);
-                    });
+                    validDensityPoints.forEach(d => { violinPath.push([seriesX - densityScale(d[1]), yScale(d[0])]); });
+                    [...validDensityPoints].reverse().forEach(d => { violinPath.push([seriesX + densityScale(d[1]), yScale(d[0])]); });
+                    if (violinPath.length > 0) violinPath.push(violinPath[0]);
 
-                    // Add points from bottom-right up to top-right (in reverse order of density points)
-                    [...validDensityPoints].reverse().forEach(d => {
-                         const y = yScale(d[0]);
-                         const xOffset = densityScale(d[1]);
-                         violinPath.push([seriesX + xOffset, y]);
-                    });
-                    
-                    // Close the path by returning to the first point
-                    if (violinPath.length > 0) {
-                        violinPath.push(violinPath[0]); // Add the first point again to close the path
-                    }
-
-                    // Ensure the path has enough points
-                    if (violinPath.length < 4) { // Need at least a few points to form a curve/shape
+                    if (violinPath.length < 4) {
                          console.warn(`Generated violin path has too few points (${violinPath.length}) for ${displaySeriesKey}. Skipping violin.`);
                          return;
                     }
 
+                    const violinLine = d3.line().x(d => d[0]).y(d => d[1]).curve(d3.curveBasis);
 
-                    const violinLine = d3.line()
-                        .x(d => d[0]) // Access x coordinate from the [x, y] array in violinPath
-                        .y(d => d[1]) // Access y coordinate from the [x, y] array in violinPath
-                        .curve(d3.curveBasis); // Smooth curve
-
-
-                    // Determine the color for the violin
-                    // For combined series, use the color of the series that is checked
+                    // Determine color (handle combined series)
                     let violinColor;
-                    if (displaySeriesKey === "1600/2000") {
-                        // Check which series is active to determine color
-                        if (activeGenerations["2000"] === false && activeGenerations["1600"] !== false) {
-                            // If 2000 is unchecked but 1600 is checked, use 1600's color
-                            violinColor = colorScale("1600");
-                        } else if (activeGenerations["1600"] === false && activeGenerations["2000"] !== false) {
-                            // If 1600 is unchecked but 2000 is checked, use 2000's color
-                            violinColor = colorScale("2000");
-                        } else if (activeGenerations["1600"] !== false && activeGenerations["2000"] !== false) {
-                            // If both are checked, prefer 1600's color for consistency
-                            violinColor = colorScale("1600");
-                        } else {
-                            // Fallback if neither is active (shouldn't happen as violin wouldn't render)
-                            const representativeSeries = allGenerations.find(s => s === "1600" || s === "2000") || allGenerations[0];
-                            violinColor = colorScale(representativeSeries);
-                        }
-                    } else {
-                        violinColor = colorScale(displaySeriesKey);
-                    }
-
-                    // Create gradient for enhanced visual appeal
-                    const gradientId = `violin-gradient-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`; // Sanitize ID
-                     // Check if gradient already exists before creating
-                    let gradient = defs.select(`#${gradientId}`);
-                     if (gradient.empty()) {
-                         gradient = defs.append("linearGradient")
-                            .attr("id", gradientId)
-                            .attr("gradientTransform", "rotate(90)");
-
-                         gradient.append("stop")
-                            .attr("offset", "0%")
-                            .attr("stop-color", violinColor)
-                            .attr("stop-opacity", 0.9);
-
-                         gradient.append("stop")
-                            .attr("offset", "100%")
-                            .attr("stop-color", violinColor)
-                            .attr("stop-opacity", 0.4);
+                     if (displaySeriesKey === "1600/2000") {
+                         // Determine color based on which series actually has data in the group
+                         const has1600Data = gpusInGroup.some(g => g.series === "1600");
+                         const has2000Data = gpusInGroup.some(g => g.series === "2000");
+                         if (has2000Data && (!has1600Data || activeGenerations["1600"] === false)) violinColor = colorScale("2000");
+                         else violinColor = colorScale("1600"); // Default to 1600 if it has data or both do
                      } else {
-                         // Update existing gradient color if needed
-                         gradient.select("stop:first-child").attr("stop-color", violinColor);
-                         gradient.select("stop:last-child").attr("stop-color", violinColor);
+                         violinColor = colorScale(displaySeriesKey) || "#ccc"; // Fallback color
                      }
 
 
-                    // Draw the violin shape
+                    // Gradient for violin fill
+                    const gradientId = `violin-gradient-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`;
+                    let gradient = defs.select(`#${gradientId}`);
+                    if (gradient.empty()) {
+                        gradient = defs.append("linearGradient").attr("id", gradientId).attr("gradientTransform", "rotate(90)");
+                        gradient.append("stop").attr("offset", "0%").attr("stop-color", violinColor).attr("stop-opacity", 0.9);
+                        gradient.append("stop").attr("offset", "100%").attr("stop-color", violinColor).attr("stop-opacity", 0.4);
+                    } else {
+                         gradient.selectAll("stop").attr("stop-color", violinColor);
+                    }
+
+                    // Draw violin shape
                     chartGroup.append("path")
                         .datum(violinPath)
                         .attr("d", violinLine)
-                        .attr("fill", `url(#${gradientId})`) // Use the gradient fill
+                        .attr("fill", `url(#${gradientId})`)
                         .attr("opacity", 0.8)
-                        .attr("stroke", violinColor) // Use the base color for stroke
+                        .attr("stroke", violinColor)
                         .attr("stroke-width", 1)
                         .attr("stroke-opacity", 0.8)
                         .attr("class", `violin-shape violin-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`)
-                        .on('mouseover', function(event) {
-                            // Calculate statistics for tooltip for both raw and effective prices
-                            const meanPrice = mean(validPrices);
-                            const medianPrice = median(validPrices);
-                            const stdDev = deviation(validPrices);
-                            
-                            // Get effective price data as well
-                            const effectivePrices = gpusInGroup
-                                .map(d => d.effectivePricePerMM2)
-                                .filter(price => price != null && isFinite(price) && price >= 0 && price <= yMax);
-                            
-                            const effectiveMeanPrice = effectivePrices.length > 0 ? mean(effectivePrices) : null;
-                            const effectiveMedianPrice = effectivePrices.length > 0 ? median(effectivePrices) : null;
-                            
-                            // Find the generation and node size for this series
-                            // Get unique die names for this series group
-                            const uniqueDieNames = Array.from(new Set(gpusInGroup.map(gpu => gpu.dieName)));
-                            
-                            // Get generation and node size for tooltip (use the most common in the group)
-                            let generation = "Unknown";
-                            let nodeSize = "Unknown";
-                            
-                            if (uniqueDieNames.length > 0) {
-                                // Find the most frequent generation in this group
-                                const generationCounts = {};
-                                const nodeSizes = {};
-                                
-                                gpusInGroup.forEach(gpu => {
-                                    const dieInfo = gpuDieData[gpu.dieName];
-                                    if (dieInfo) {
-                                        generationCounts[dieInfo.generation] = (generationCounts[dieInfo.generation] || 0) + 1;
-                                        nodeSizes[gpu.manufacturingNode] = (nodeSizes[gpu.manufacturingNode] || 0) + 1;
-                                    }
-                                });
-                                
-                                // Find the most common generation
-                                let maxCount = 0;
-                                Object.entries(generationCounts).forEach(([gen, count]) => {
-                                    if (count > maxCount) {
-                                        maxCount = count;
-                                        generation = gen;
-                                    }
-                                });
-                                
-                                // Find the most common node size
-                                maxCount = 0;
-                                Object.entries(nodeSizes).forEach(([node, count]) => {
-                                    if (count > maxCount) {
-                                        maxCount = count;
-                                        nodeSize = node;
-                                    }
-                                });
-                            }
-                            
-                            // Show and position tooltip
-                            d3.select(`.${tooltipContainerClass}`)
-                                .style('visibility', 'visible')
-                                .style('left', `${event.pageX + 15}px`)
-                                .style('top', `${event.pageY - 10}px`);
+                        .on('mouseover', (event) => { // Tooltip (Original logic)
+                            const meanVal = mean(validPrices);
+                            const medianVal = median(validPrices);
+                            const stdDevVal = deviation(validPrices);
+                            const effectivePrices = gpusInGroup.map(d => d.effectivePricePerMM2).filter(p => p != null && isFinite(p) && p >= 0 && p <= yMaxGpu);
+                            const effectiveMean = effectivePrices.length > 0 ? mean(effectivePrices) : null;
+                            const effectiveMedian = effectivePrices.length > 0 ? median(effectivePrices) : null;
+                            const { generation, node } = getGenerationAndNode(gpusInGroup, gpuDieData);
 
-                            // Create tooltip content
-                            const tooltipContent = `
-                                <div class="tooltip-title" style="color: ${violinColor};">${displaySeriesKey} Series</div>
-                                <div class="tooltip-info">
-                                    <strong>${generation}</strong><br>
-                                    <strong>Node Size:</strong> ${nodeSize} nm<br>
-                                    
-                                    <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
-                                        <strong style="color:#a0e6ff;">Full Price per mm²:</strong>
-                                        <br>Mean: $${meanPrice.toFixed(2)}
-                                        <br>Median: $${medianPrice.toFixed(2)}
-                                        <br>S.D.: $${stdDev.toFixed(2)}
-                                    </div>
-                                    
-                                    <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
-                                        <strong style="color:#a0ffb0;">Cut per mm²:</strong>
-                                        ${effectiveMeanPrice !== null ? `<br>Mean: $${effectiveMeanPrice.toFixed(2)}` : ''}
-                                        ${effectiveMedianPrice !== null ? `<br>Median: $${effectiveMedianPrice.toFixed(2)}` : ''}
-                                        ${effectivePrices.length > 0 ? `<br>Adjusted for ${effectivePrices.length} die-cut GPUs` : '<br>No data available'}
-                                    </div>
-                                    
-                                    <div style="margin-top:5px;">
-                                        <strong>Sample Size:</strong> ${validPrices.length} GPUs
-                                    </div>
-                                </div>
-                            `;
-
-                            d3.select(`.${tooltipContainerClass}`).html(tooltipContent);
+                             d3.select(`.${tooltipContainerClass}`)
+                                .style('visibility', 'visible').style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`)
+                                .html(`<div class="tooltip-title" style="color: ${violinColor};">${displaySeriesKey} Series</div>
+                                       <div class="tooltip-info"><strong>${generation}</strong><br><strong>Node:</strong> ${node} nm<br>
+                                       <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
+                                           <strong style="color:#a0e6ff;">Full Price/mm²:</strong><br>Mean: $${meanVal ? meanVal.toFixed(2) : 'N/A'}<br>Median: $${medianVal ? medianVal.toFixed(2) : 'N/A'}<br>S.D.: $${stdDevVal ? stdDevVal.toFixed(2) : 'N/A'}</div>
+                                       <div style="margin-top:5px; border-bottom:1px dotted #777; padding-bottom:3px;">
+                                           <strong style="color:#a0ffb0;">Cut Price/mm²:</strong>
+                                           ${effectiveMean !== null ? `<br>Mean: $${effectiveMean.toFixed(2)}` : ''}
+                                           ${effectiveMedian !== null ? `<br>Median: $${effectiveMedian.toFixed(2)}` : ''}
+                                           ${effectivePrices.length > 0 ? `<br>(${effectivePrices.length} cut GPUs)` : '<br>No data'}</div>
+                                       <div style="margin-top:5px;"><strong>Sample Size:</strong> ${validPrices.length} GPUs</div></div>`);
                         })
-                        .on('mouseout', function() {
-                            // Hide tooltip
-                            d3.select(`.${tooltipContainerClass}`)
-                                .style('visibility', 'hidden');
-                        });
+                        .on('mouseout', () => d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden'));
 
-
-                    // Calculate key statistics for the inner box/whiskers
-                    // Ensure validPrices has enough points for quartiles
+                    // Draw inner box/whiskers (Uses primary yScale)
                     if (validPrices.length > 0) {
-                        const sortedPrices = validPrices.sort(d3.ascending);
-                        const stats = {
-                            min: min(sortedPrices), // Use imported min
-                            q1: validPrices.length >= 3 ? quantile(sortedPrices, 0.25) : undefined, // Use imported quantile
-                            median: median(sortedPrices), // Use imported median
-                            q3: validPrices.length >= 3 ? quantile(sortedPrices, 0.75) : undefined, // Use imported quantile
-                            max: max(sortedPrices), // Use imported max
-                            mean: mean(sortedPrices) // Use imported mean (Not drawn, but might be useful)
-                        };
+                         const sortedPrices = [...validPrices].sort(d3.ascending);
+                         const stats = {
+                             min: min(sortedPrices),
+                             q1: sortedPrices.length >= 3 ? quantile(sortedPrices, 0.25) : undefined,
+                             median: median(sortedPrices),
+                             q3: sortedPrices.length >= 3 ? quantile(sortedPrices, 0.75) : undefined,
+                             max: max(sortedPrices)
+                         };
 
+                         const statGroup = chartGroup.append("g").attr("class", `violin-stats violin-stats-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
+                         const statWidth = dynamicViolinWidth / 3;
 
-                        // Draw inner statistics - median line
-                        if (isFinite(stats.median)) {
-                             chartGroup.append("line")
-                                .attr("x1", seriesX - dynamicViolinWidth / 4) // Use dynamic width for stats
-                                .attr("x2", seriesX + dynamicViolinWidth / 4)
-                                .attr("y1", yScale(stats.median))
-                                .attr("y2", yScale(stats.median))
-                                .attr("stroke", "#fff")
-                                .attr("stroke-width", 2)
-                                .attr("opacity", 0.9)
-                                .attr("class", `violin-median violin-median-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
-                        }
-
-                        // Draw inner statistics - box for interquartile range (IQR)
+                         if (isFinite(stats.median)) {
+                              statGroup.append("line")
+                                 .attr("x1", seriesX - statWidth / 2).attr("x2", seriesX + statWidth / 2)
+                                 .attr("y1", yScale(stats.median)).attr("y2", yScale(stats.median))
+                                 .attr("stroke", "#fff").attr("stroke-width", 2).attr("opacity", 0.9).attr("class", "violin-median");
+                         }
                          if (isFinite(stats.q1) && isFinite(stats.q3) && stats.q1 <= stats.q3) {
-                             const boxHeight = yScale(stats.q1) - yScale(stats.q3);
-                             if (boxHeight >= 0) { // Draw even if height is 0 (single point)
-                                  chartGroup.append("rect")
-                                    .attr("x", seriesX - dynamicViolinWidth / 6) // Use dynamic width for stats
-                                    .attr("y", yScale(stats.q3))
-                                    .attr("width", dynamicViolinWidth / 3)
-                                    .attr("height", boxHeight)
-                                    .attr("fill", "#fff")
-                                    .attr("opacity", 0.5)
-                                    .attr("class", `violin-iqr violin-iqr-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
-                             }
-                        }
-
-                        // Draw whiskers (connecting IQR box to min/max)
-                         // Ensure min/max are valid and within the relevant range relative to the box
+                              const boxHeight = Math.max(0, yScale(stats.q1) - yScale(stats.q3));
+                              statGroup.append("rect")
+                                 .attr("x", seriesX - statWidth / 2).attr("y", yScale(stats.q3))
+                                 .attr("width", statWidth).attr("height", boxHeight)
+                                 .attr("fill", "#fff").attr("opacity", 0.4).attr("class", "violin-iqr");
+                         }
                          if (isFinite(stats.min) && isFinite(stats.q1) && stats.min < stats.q1) {
-                              chartGroup.append("line") // Whisker line
-                                .attr("x1", seriesX)
-                                .attr("x2", seriesX)
-                                .attr("y1", yScale(stats.min))
-                                .attr("y2", yScale(stats.q1))
-                                .attr("stroke", "#fff")
-                                .attr("stroke-width", 1)
-                                .attr("class", `violin-whisker violin-whisker-min-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
-                             chartGroup.append("line") // Min cap
-                                .attr("x1", seriesX - dynamicViolinWidth / 8)
-                                .attr("x2", seriesX + dynamicViolinWidth / 8)
-                                .attr("y1", yScale(stats.min))
-                                .attr("y2", yScale(stats.min))
-                                .attr("stroke", "#fff")
-                                .attr("stroke-width", 1)
-                                .attr("opacity", 0.7)
-                                .attr("class", `violin-min-cap violin-min-cap-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
+                             statGroup.append("line").attr("x1", seriesX).attr("x2", seriesX).attr("y1", yScale(stats.min)).attr("y2", yScale(stats.q1)).attr("stroke", "#fff").attr("stroke-width", 1).attr("class", "violin-whisker");
+                             statGroup.append("line").attr("x1", seriesX - statWidth / 4).attr("x2", seriesX + statWidth / 4).attr("y1", yScale(stats.min)).attr("y2", yScale(stats.min)).attr("stroke", "#fff").attr("stroke-width", 1).attr("opacity", 0.7).attr("class", "violin-min-cap");
                          }
-
                          if (isFinite(stats.max) && isFinite(stats.q3) && stats.max > stats.q3) {
-                             chartGroup.append("line") // Whisker line
-                                .attr("x1", seriesX)
-                                .attr("x2", seriesX)
-                                .attr("y1", yScale(stats.q3))
-                                .attr("y2", yScale(stats.max))
-                                .attr("stroke", "#fff")
-                                .attr("stroke-width", 1)
-                                .attr("class", `violin-whisker violin-whisker-max-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
-                             chartGroup.append("line") // Max cap
-                                .attr("x1", seriesX - dynamicViolinWidth / 8)
-                                .attr("x2", seriesX + dynamicViolinWidth / 8)
-                                .attr("y1", yScale(stats.max))
-                                .attr("y2", yScale(stats.max))
-                                .attr("stroke", "#fff")
-                                .attr("stroke-width", 1)
-                                .attr("opacity", 0.7)
-                                .attr("class", `violin-max-cap violin-max-cap-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
+                             statGroup.append("line").attr("x1", seriesX).attr("x2", seriesX).attr("y1", yScale(stats.q3)).attr("y2", yScale(stats.max)).attr("stroke", "#fff").attr("stroke-width", 1).attr("class", "violin-whisker");
+                             statGroup.append("line").attr("x1", seriesX - statWidth / 4).attr("x2", seriesX + statWidth / 4).attr("y1", yScale(stats.max)).attr("y2", yScale(stats.max)).attr("stroke", "#fff").attr("stroke-width", 1).attr("opacity", 0.7).attr("class", "violin-max-cap");
                          }
-
-                    } else {
-                        // Not enough points for stats, maybe just add the label below the violin space
-                         chartGroup.append("text")
-                            .attr("x", seriesX)
-                            .attr("y", height + 10) // Position below X-axis label area
-                            .attr("text-anchor", "middle")
-                            .attr("fill", "#aaa")
-                            .style("font-size", "10px")
-                            .text(`(${validPrices.length} data point${validPrices.length === 1 ? '' : 's'})`) // Indicate number of points
-                             .attr("class", `violin-label violin-label-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
                     }
                 } else {
-                     // Not enough valid data points for KDE/stats for this display series key
-                      if (gpusInGroup.length > 0) { // Only add a note if there were GPUs in the group at all
+                      if (gpusInGroup.length > 0) {
                            console.log(`Not enough valid data points (${validPrices.length}) for violin plot for ${displaySeriesKey}.`);
-                           // Optionally add a text note or draw a single point placeholder
                             chartGroup.append("text")
-                                .attr("x", seriesX)
-                                .attr("y", height / 2)
-                                .attr("text-anchor", "middle")
-                                .attr("fill", "#777")
-                                .style("font-size", "10px")
-                                .text(`Too few data points (${validPrices.length})`)
-                                .attr("class", `violin-note violin-note-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
-                      } else {
-                           console.log(`No data points for ${displaySeriesKey}.`);
+                                .attr("x", seriesX).attr("y", height / 2).attr("text-anchor", "middle")
+                                .attr("fill", "#777").style("font-size", "10px")
+                                .text(`Too few data points`).attr("class", `violin-note violin-note-${displaySeriesKey.replace(/[^a-zA-Z0-9-_]/g, '-')}`);
                       }
                 }
-            }); // End of Object.entries(dataByDisplaySeries).forEach
+            }); // End of violin loop
 
-            // Draw scatter points over the violins
-            // Use join for smoother updates
-            
-            // Create a scale to map die size to circle radius
-            // Peg 300mm² as the default size (radius 4)
-            const radiusScale = d3.scaleSqrt()  // Square root scale for perceptually accurate area representation
-                .domain([0, 300, 800])  // Min, reference point, max expected die size in mm²
-                .range([1, 4, 11])       // Min, default, max radius
-                .clamp(true);           // Restrict output to the range values
-            
-            // Sort data to render larger points first, smaller points on top
-            const sortedData = [...processedData].sort((a, b) => b.dieSizeMM2 - a.dieSizeMM2);
-            
+            // Draw scatter points (Uses primary yScale)
+            const radiusScale = d3.scaleSqrt()
+                .domain([0, 300, 800])
+                .range([1, 4, 11])
+                .clamp(true);
+
+            const sortedDataForScatter = [...processedData].sort((a, b) => b.dieSizeMM2 - a.dieSizeMM2);
+
             chartGroup.selectAll(".die-area-dot")
-                 .data(sortedData, d => d.model) // Use sorted data and a key function (GPU model)
+                 .data(sortedDataForScatter.filter(d => activeGenerations[d.series] !== false), d => d.model) // Filter scatter points by active generation
                  .join(
                      enter => enter.append('circle')
-                         .attr('class', d => `die-area-dot dot-${d.series.replace(/\s+/g, '-')}`)
-                         .attr('r', 0) // Start with radius 0 for animation
-                         .attr('cx', d => {
-                             const displaySeries = seriesPositionMapping[d.series] || d.series;
-                             return xScale(displaySeries);
-                         })
-                         .attr('cy', d => yScale(d.displayPricePerMM2))
+                         .attr('class', d => `die-area-dot dot-${(seriesPositionMapping[d.series] || d.series).replace(/[^a-zA-Z0-9-_]/g, '-')}`)
+                         .attr('cx', d => xScale(seriesPositionMapping[d.series] || d.series))
+                         .attr('cy', d => yScale(d.displayPricePerMM2)) // Use primary scale
                          .attr('fill', d => colorScale(d.series))
-                         .attr('stroke', '#fff')
-                         .attr('stroke-width', 0.5)
-                         .call(enter => enter.transition().duration(500)
-                             .attr('r', d => radiusScale(d.dieSizeMM2))), // Scale radius based on die size
-
+                         .attr('stroke', '#fff').attr('stroke-width', 0.5)
+                         .attr('r', 0)
+                         .call(enter => enter.transition().duration(500).attr('r', d => radiusScale(d.dieSizeMM2))),
                      update => update
-                         .attr('class', d => `die-area-dot dot-${d.series.replace(/\s+/g, '-')}`) // Update class if series changes (unlikely here)
-                         .transition().duration(500) // Animate updates
-                         .attr('cx', d => {
-                              const displaySeries = seriesPositionMapping[d.series] || d.series;
-                              return xScale(displaySeries);
-                         })
-                         .attr('cy', d => yScale(d.displayPricePerMM2))
+                         .attr('class', d => `die-area-dot dot-${(seriesPositionMapping[d.series] || d.series).replace(/[^a-zA-Z0-9-_]/g, '-')}`)
+                         .transition().duration(500)
+                         .attr('cx', d => xScale(seriesPositionMapping[d.series] || d.series))
+                         .attr('cy', d => yScale(d.displayPricePerMM2)) // Use primary scale
                          .attr('fill', d => colorScale(d.series))
-                         .attr('r', d => radiusScale(d.dieSizeMM2)) // Scale radius based on die size
-                         .attr('opacity', 1), // Ensure opacity is correct after update
-
-
-                     exit => exit.transition().duration(500).attr('r', 0).attr('opacity', 0).remove() // Animate exit
+                         .attr('r', d => radiusScale(d.dieSizeMM2))
+                         .attr('opacity', 0.85), // Set opacity on update too
+                     exit => exit.transition().duration(500).attr('r', 0).attr('opacity', 0).remove()
                  )
-                 .on('mouseover', function(event, d) {
-                     // Show and position tooltip
-                     d3.select(`.${tooltipContainerClass}`)
-                         .style('visibility', 'visible')
-                         .style('left', `${event.pageX + 15}px`)
-                         .style('top', `${event.pageY - 10}px`);
-
-                     // Determine which nominal value to show if adjusted
-                     let nominalValueString = '';
-                     if (d.adjustmentType !== 'Nominal') {
-                         const nominalPricePerMM2 = useEffectiveDieSize ? d.rawEffectivePricePerMM2 : d.rawPricePerMM2;
-                         nominalValueString = ` <span style="color: #aaa;">($${nominalPricePerMM2.toFixed(2)} nominal)</span>`;
-                     }
-
-                     // Create tooltip content
-                     const tooltipContent = `
-                         <div class="tooltip-title" style="color: ${colorScale(d.series)};">${d.model}</div>
-                         <div class="tooltip-info">
-                             <strong>Series:</strong> ${d.series} series (${d.generation})<br>
-                             <strong>Original MSRP:</strong> ${d.originalMsrp ? `$${d.originalMsrp.toLocaleString()}` : 'N/A'}<br>
-                             ${d.adjustmentType !== 'Nominal' ? `<strong>Adjusted MSRP (${d.adjustmentType}):</strong> $${d.adjustedMsrp.toFixed(0)}<br>` : ''}
-                             <strong>Die Size:</strong> ${d.dieSizeMM2 ? `${d.dieSizeMM2.toLocaleString()} mm²` : 'N/A'}<br>
-                             <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'} / ${d.fullCudaCores ? d.fullCudaCores.toLocaleString() : 'N/A'}<br>
-                             <strong>Die Utilization:</strong> ${d.dieUtilizationRatio != null ? `${(d.dieUtilizationRatio * 100).toFixed(1)}%` : 'N/A'}<br>
-
-                             <strong>${useEffectiveDieSize ? 'Effective' : 'Full'} Price per mm²:</strong>
-                             ${d.displayPricePerMM2 != null && isFinite(d.displayPricePerMM2) ?
-                                 `$${d.displayPricePerMM2.toFixed(2)}` :
-                                 'N/A'}
-                             ${nominalValueString}<br>
-                             <span style="color: #ccc; font-size: 0.9em;">(${d.adjustmentType})</span><br>
-
-                             <strong>Die Name:</strong> ${d.dieName || 'N/A'}<br>
-                             <strong>Year:</strong> ${d.releaseYear || 'N/A'}
-                         </div>
-                     `;
-
-
-                     d3.select(`.${tooltipContainerClass}`).html(tooltipContent);
-
-                     // Highlight the point
-                     d3.select(this)
-                         .attr('stroke-width', 2)
-                         .attr('opacity', 1); // Ensure full opacity when hovered
+                 .attr("opacity", 0.85)
+                 .on('mouseover', function(event, d) { // Tooltip (Original logic)
+                      d3.select(`.${tooltipContainerClass}`)
+                         .style('visibility', 'visible').style('left', `${event.pageX + 15}px`).style('top', `${event.pageY - 10}px`);
+                      let nominalValueString = '';
+                      if (d.adjustmentType !== 'Nominal') {
+                          const nominalPrice = useEffectiveDieSize ? d.rawEffectivePricePerMM2 : d.rawPricePerMM2;
+                          nominalValueString = ` <span style="color: #aaa;">($${nominalPrice.toFixed(2)} nominal)</span>`;
+                      }
+                      d3.select(`.${tooltipContainerClass}`).html(
+                         `<div class="tooltip-title" style="color: ${colorScale(d.series)};">${d.model}</div>
+                          <div class="tooltip-info">
+                              <strong>Series:</strong> ${d.series} (${d.generation})<br>
+                              <strong>MSRP:</strong> ${d.originalMsrp ? `$${d.originalMsrp.toLocaleString()}` : 'N/A'}
+                              ${d.adjustmentType !== 'Nominal' ? `<br><strong>Adj. MSRP (${d.adjustmentType}):</strong> $${d.adjustedMsrp.toFixed(0)}` : ''}<br>
+                              <strong>Die Size:</strong> ${d.dieSizeMM2 ? `${d.dieSizeMM2.toLocaleString()} mm²` : 'N/A'}<br>
+                              <strong>CUDA:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'} / ${d.fullCudaCores ? d.fullCudaCores.toLocaleString() : 'N/A'} (${d.dieUtilizationRatio != null ? `${(d.dieUtilizationRatio * 100).toFixed(1)}%` : 'N/A'})<br>
+                              <strong>${useEffectiveDieSize ? 'Cut' : 'Full'} Price/mm²:</strong> ${d.displayPricePerMM2 != null && isFinite(d.displayPricePerMM2) ? `$${d.displayPricePerMM2.toFixed(2)}` : 'N/A'}${nominalValueString}<br>
+                              <span style="color: #ccc; font-size: 0.9em;">(${d.adjustmentType})</span><br>
+                              <strong>Die:</strong> ${d.dieName || 'N/A'} (${d.manufacturingNode || 'N/A'}nm)<br>
+                              <strong>Year:</strong> ${d.releaseYear || 'N/A'}
+                          </div>`);
+                      d3.select(this).attr('stroke-width', 2).attr('opacity', 1);
                  })
                  .on('mouseout', function(event, d) {
-                     // Hide tooltip
-                     d3.select(`.${tooltipContainerClass}`)
-                         .style('visibility', 'hidden');
-
-                     // Return point to its proper scaled size based on die area
-                     d3.select(this)
-                         .attr('r', d => radiusScale(d.dieSizeMM2))
-                         .attr('stroke-width', 0.5)
-                         .attr('opacity', 1); // Return to default non-hover opacity
+                      d3.select(`.${tooltipContainerClass}`).style('visibility', 'hidden');
+                      d3.select(this).attr('stroke-width', 0.5).attr('opacity', 0.85);
                  });
+
+        } else { // No processed data
+            chartGroup.append("text").attr("x", width / 2).attr("y", height / 2)
+                .attr("text-anchor", "middle").attr("fill", "#ddd").style("font-size", "14px")
+                .text("No data to display based on current filters.");
         }
 
-        // Cleanup function to remove tooltips created by D3 when component unmounts
+        // Cleanup function
         return () => {
-            d3.select(`.${tooltipContainerClass}`).remove();
+            const tooltip = d3.select(`.${tooltipContainerClass}`);
+            if (tooltip.size()) {
+                tooltip.remove();
+            }
         };
 
-    }, [
-        gpuData,
-        gpuDieData,
-        dieAreaSvgRef,
-        activeGenerations,
-        useEffectiveDieSize,
-        useCpiAdjustment, // Updated dependency
-        useRealWageScaling // Updated dependency
+    }, [ // Update dependencies
+        gpuData, gpuDieData, dieAreaSvgRef, activeGenerations,
+        useEffectiveDieSize, useCpiAdjustment, useRealWageScaling, showWaferPriceArea, // Updated state variable dependency
+        setActiveGenerations, setShowAllDieGenerations
     ]);
 
     return (
@@ -1320,24 +815,50 @@ function DieAreaPlot({
     );
 }
 
-// Helper function for kernel density estimation
+// Helper function for kernel density estimation (from original code)
 function kernelDensityEstimator(kernel, X) {
-    // X are the y-values (price/mm^2 values) where density is estimated
-    // V are the data points (validPrices)
     return function(V) {
-        // For each estimation point x in X, calculate the mean of the kernel contributions
-        return X.map(x => [x, mean(V, v => kernel(x - v))]); // Use imported mean
+        return X.map(x => [x, mean(V, v => kernel(x - v))]);
     };
 }
 
-// Epanechnikov kernel function
-// v is the difference between the estimation point and a data point (x - data_point)
-// k is the bandwidth
+// Epanechnikov kernel function (from original code)
 function kernelEpanechnikov(k) {
     return function(v) {
-        // Only return non-zero if the point v is within the bandwidth k of the center (0)
         return Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
     };
 }
+
+// Helper to get most common generation and node for violin tooltip
+function getGenerationAndNode(gpusInGroup, gpuDieData) {
+     let generation = "Unknown";
+     let node = "Unknown";
+     if (!gpusInGroup || gpusInGroup.length === 0) return { generation, node };
+
+     const generationCounts = {};
+     const nodeCounts = {};
+     gpusInGroup.forEach(gpu => {
+         const dieInfo = gpuDieData[gpu.dieName];
+         if (dieInfo && dieInfo.generation) {
+             generationCounts[dieInfo.generation] = (generationCounts[dieInfo.generation] || 0) + 1;
+         }
+         if (gpu.manufacturingNode) {
+             nodeCounts[gpu.manufacturingNode] = (nodeCounts[gpu.manufacturingNode] || 0) + 1;
+         }
+     });
+
+     let maxGenCount = 0;
+     Object.entries(generationCounts).forEach(([gen, count]) => {
+         if (count > maxGenCount) { maxGenCount = count; generation = gen; }
+     });
+
+     let maxNodeCount = 0;
+     Object.entries(nodeCounts).forEach(([n, count]) => {
+         if (count > maxNodeCount) { maxNodeCount = count; node = n; }
+     });
+
+     return { generation, node };
+}
+
 
 export default DieAreaPlot;
