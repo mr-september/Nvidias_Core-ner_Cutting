@@ -22,6 +22,7 @@ There are theoretically other visualizations possible from the data `.jsons` in 
 ## Acknowledgements
 - [u/brennan313](brennan313) for the background image.
 - [TechPowerUp](https://www.techpowerup.com/) for GPU data.
+- [FRED](https://fred.stlouisfed.org) for CPI and wage data.
 
 ## License
 This project is licensed under the MIT License.

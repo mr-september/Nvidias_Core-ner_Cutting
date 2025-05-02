@@ -659,7 +659,7 @@
     "specialFlagship": false,
     "msrp": 1999,
     "dieName": "GB202",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
@@ -670,7 +670,7 @@
     "flagship": false,
     "msrp": 999,
     "dieName": "GB203",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
@@ -681,7 +681,7 @@
     "flagship": false,
     "msrp": 799,
     "dieName": "GB203",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
@@ -692,7 +692,7 @@
     "flagship": false,
     "msrp": 549,
     "dieName": "GB205",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
@@ -703,7 +703,7 @@
     "flagship": false,
     "msrp": 429,
     "dieName": "GB207",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   },
   {
     "series": "5000",
@@ -714,6 +714,6 @@
     "flagship": false,
     "msrp": 299,
     "dieName": "GB207",
-    "manufacturingNode": 4
+    "manufacturingNode": 5
   }
 ]

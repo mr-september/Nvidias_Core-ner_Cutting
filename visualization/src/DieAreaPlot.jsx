@@ -1,9 +1,10 @@
 // DieAreaPlot.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react'; // Import useState
 import * as d3 from 'd3';
 // Import specific statistical functions from d3-array
 import { deviation, mean, median, quantile, min, max, range } from 'd3-array'; // Import deviation, mean, etc.
 import inflationData from './assets/inflation_data.json'; // Import inflation data
+import medianRealWageData from './assets/median_real_wage_data.json'; // Import median REAL wage data
 // App.css is imported in App.jsx and applies globally
 
 function DieAreaPlot({
@@ -18,10 +19,23 @@ function DieAreaPlot({
     setShowAllDieGenerations
 }) {
     // Add state for toggling between full and effective die calculations
-    const [useEffectiveDieSize, setUseEffectiveDieSize] = React.useState(false);
-    
-    // Add state for toggling inflation adjustment
-    const [useInflationAdjustment, setUseInflationAdjustment] = React.useState(false);
+    const [useEffectiveDieSize, setUseEffectiveDieSize] = useState(false);
+
+    // Add state for toggling CPI inflation adjustment
+    const [useCpiAdjustment, setUseCpiAdjustment] = useState(false);
+
+    // Add state for toggling scaling based on real wage changes
+    const [useRealWageScaling, setUseRealWageScaling] = useState(false);
+
+    // Function to handle adjustment toggle clicks - allow both toggles to be on simultaneously
+    const handleAdjustmentToggle = (type) => {
+        if (type === 'cpi') {
+            setUseCpiAdjustment(!useCpiAdjustment);
+        } else if (type === 'wage') {
+            setUseRealWageScaling(!useRealWageScaling);
+        }
+    };
+
 
     useEffect(() => {
         // Ensure data and ref are available before attempting to draw
@@ -81,25 +95,26 @@ function DieAreaPlot({
         const toggleButtonWidth = 120;
         const toggleButtonHeight = 25;
         const toggleButtonSpacing = 10;
-        
+
         // Position the toggles next to each other
         const dieToggleX = width - toggleButtonWidth - 10; // Die toggle on the right
-        const inflationToggleX = dieToggleX - toggleButtonWidth - toggleButtonSpacing; // Inflation toggle to the left
+        const wageToggleX = dieToggleX - toggleButtonWidth - toggleButtonSpacing; // Wage toggle to the left
+        const cpiToggleX = wageToggleX - toggleButtonWidth - toggleButtonSpacing; // CPI toggle further left
         const toggleButtonY = -40; // Above the chart
         
-        // Inflation toggle button background
+        // CPI Inflation toggle button background
         chartGroup.append("rect")
-            .attr("x", inflationToggleX)
+            .attr("x", cpiToggleX)
             .attr("y", toggleButtonY)
             .attr("width", toggleButtonWidth)
             .attr("height", toggleButtonHeight)
             .attr("rx", 5)
             .attr("ry", 5)
-            .attr("fill", useInflationAdjustment ? "#646cff" : "#444")
+            .attr("fill", useCpiAdjustment ? "#646cff" : "#444")
             .attr("cursor", "pointer")
-            .attr("class", "inflation-toggle-btn")
+            .attr("class", "cpi-toggle-btn")
             .on("click", function() {
-                setUseInflationAdjustment(!useInflationAdjustment);
+                handleAdjustmentToggle('cpi');
             })
             .on("mouseover", function(event) {
                 // Show tooltip on hover
@@ -109,11 +124,12 @@ function DieAreaPlot({
                     .style('top', `${event.pageY - 40}px`)
                     .html(`
                         <div style="text-align: center; padding: 5px;">
-                            <strong>Price Inflation Adjustment</strong>
+                            <strong>CPI Adjustment</strong>
                         </div>
                         <div style="padding: 5px;">
-                            <strong>Nominal:</strong> Shows the original MSRP as announced at launch.<br>
-                            <strong>Inflation Adjusted:</strong> Adjusts all prices to 2025 dollars using US CPI data.<br>
+                            <strong>Off:</strong> No CPI adjustment applied.<br>
+                            <strong>On:</strong> Adjusts MSRP to constant ${inflationData.base_year} dollars using US CPI data.<br>
+                            <span style="font-size: 0.9em; color: #aaa;">Can be combined with Wage toggle for real wage adjustment.</span><br>
                             Base year: ${inflationData.base_year}
                         </div>
                     `);
@@ -124,16 +140,65 @@ function DieAreaPlot({
                     .style('visibility', 'hidden');
             });
 
-        // Inflation toggle button text
+        // CPI Inflation toggle button text
         chartGroup.append("text")
-            .attr("x", inflationToggleX + toggleButtonWidth/2)
+            .attr("x", cpiToggleX + toggleButtonWidth/2)
             .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
             .attr("text-anchor", "middle")
             .attr("fill", "#fff")
             .style("font-size", "12px")
             .style("pointer-events", "none")
-            .text(useInflationAdjustment ? "Inflation Adj." : "Nominal");
-            
+            .text(useCpiAdjustment ? "CPI On" : "CPI Off");
+
+        // Real Wage Scaling toggle button background
+        chartGroup.append("rect")
+            .attr("x", wageToggleX)
+            .attr("y", toggleButtonY)
+            .attr("width", toggleButtonWidth)
+            .attr("height", toggleButtonHeight)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", useRealWageScaling ? "#ff646c" : "#444") // Different color for wage scaling
+            .attr("cursor", "pointer")
+            .attr("class", "wage-toggle-btn")
+            .on("click", function() {
+                handleAdjustmentToggle('wage');
+            })
+            .on("mouseover", function(event) {
+                // Show tooltip on hover
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'visible')
+                    .style('left', `${event.pageX}px`)
+                    .style('top', `${event.pageY - 40}px`)
+                    .html(`
+                        <div style="text-align: center; padding: 5px;">
+                            <strong>Wage Scaling</strong>
+                        </div>
+                        <div style="padding: 5px;">
+                            <strong>Off:</strong> No wage scaling applied.<br>
+                            <strong>On, CPI Off:</strong> Scales MSRP by the change in nominal wages (calculated).<br>
+                            <strong>On, CPI On:</strong> Scales MSRP by the change in real wages (directly from data).<br>
+                            <span style="font-size: 0.9em; color: #aaa;">Base year for wage scaling: 2024</span>
+                        </div>
+                    `);
+            })
+            .on("mouseout", function() {
+                // Hide tooltip
+                d3.select(`.${tooltipContainerClass}`)
+                    .style('visibility', 'hidden');
+            });
+
+        // Real Wage Scaling toggle button text
+        chartGroup.append("text")
+            .attr("x", wageToggleX + toggleButtonWidth/2)
+            .attr("y", toggleButtonY + toggleButtonHeight/2 + 4)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#fff")
+            .style("font-size", "12px")
+            .style("pointer-events", "none")
+            .text(useRealWageScaling ? "Wage On" : "Wage Off");
+
+
         // Die calculation toggle button background
         chartGroup.append("rect")
             .attr("x", dieToggleX)
@@ -222,7 +287,7 @@ function DieAreaPlot({
             })
             .map(gpu => {
                 const dieInfo = gpuDieData[gpu.dieName];
-                
+
                 // Calculate the die utilization ratio (how much of the full die is being used)
                 const fullCudaCores = dieInfo.fullCudaCores || 0;
                 const actualCudaCores = gpu.cudaCores || 0;
@@ -232,36 +297,75 @@ function DieAreaPlot({
                 // Using a formula that balances linear and non-linear scaling of die area to cores
                 // Most chip components scale linearly while some (like cache, I/O) remain constant
                 const effectiveDieSize = dieInfo.dieSizeMM2 * (0.3 + 0.7 * dieUtilizationRatio);
-                
-                // Apply inflation adjustment if enabled
+
+                // Determine the adjustment multiplier and type based on toggles
                 const year = gpu.releaseYear.toString();
-                const inflationMultiplier = useInflationAdjustment && inflationData.multipliers[year] 
-                    ? inflationData.multipliers[year]
-                    : 1;
+                let adjustmentMultiplier = 1;
+                let adjustmentType = 'Nominal'; // For tooltip
+                let adjustedMsrp = gpu.msrp; // Start with nominal MSRP
+
+                // Get base year real wage and CPI data
+                const baseRealWage = medianRealWageData["2024"] || 373; // Latest year as base, fallback value
+                const baseCPI = inflationData.cpi_data["2024"] || 313.2; // Latest year CPI data
                 
-                // Adjust MSRP for inflation if the toggle is on
-                const adjustedMsrp = gpu.msrp * inflationMultiplier;
+                // Get release year data
+                const yearRealWage = medianRealWageData[year];
+                const yearCPI = inflationData.cpi_data[year];
+                const cpiMultiplier = inflationData.multipliers[year];
                 
+                // Calculate nominal wages (if needed) by reversing the CPI adjustment from real wages
+                // nominal wage = real wage * (CPI_year / CPI_base)
+                const baseNominalWage = baseRealWage * (baseCPI / 100);
+                const yearNominalWage = yearRealWage ? yearRealWage * (yearCPI / 100) : null;
+                
+                // Four possible states based on toggle combinations:
+                if (useCpiAdjustment && useRealWageScaling) {
+                    // Real wage adjustment (both toggles ON)
+                    // Use real wage data directly
+                    if (yearRealWage && baseRealWage && yearRealWage > 0) {
+                        adjustmentMultiplier = baseRealWage / yearRealWage;
+                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
+                        adjustmentType = 'Real Wage (to 2024)';
+                    } else {
+                        adjustmentType = 'Nominal (Wage Data Missing)';
+                    }
+                } else if (useCpiAdjustment && !useRealWageScaling) {
+                    // CPI adjustment only (inflation adjustment)
+                    if (cpiMultiplier) {
+                        adjustmentMultiplier = cpiMultiplier;
+                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
+                        adjustmentType = `CPI Adj. (to ${inflationData.base_year})`;
+                    }
+                } else if (!useCpiAdjustment && useRealWageScaling) {
+                    // Nominal wage adjustment (requires calculating nominal wages)
+                    if (yearNominalWage && baseNominalWage && yearNominalWage > 0) {
+                        adjustmentMultiplier = baseNominalWage / yearNominalWage;
+                        adjustedMsrp = gpu.msrp * adjustmentMultiplier;
+                        adjustmentType = 'Nominal Wage (to 2024)';
+                    } else {
+                        adjustmentType = 'Nominal (Wage Data Missing)';
+                    }
+                }
+                // If both toggles are OFF, adjustedMsrp remains gpu.msrp and type is 'Nominal'
+
                 return {
                     ...gpu,
-                    dieSizeMM2: dieInfo.dieSizeMM2, // Keep original die size
-                    fullCudaCores: fullCudaCores, // Add full CUDA cores info
-                    dieUtilizationRatio: dieUtilizationRatio, // Add utilization ratio
-                    effectiveDieSize: effectiveDieSize, // Add effective die size
-                    // Assume generation is consistently available in dieInfo or GPU data
-                    generation: dieInfo.generation || "Unknown", // Fallback for generation
-                    // Store the inflation multiplier for this GPU's release year
-                    inflationMultiplier: inflationMultiplier,
-                    // Store both original and inflation-adjusted MSRPs
+                    dieSizeMM2: dieInfo.dieSizeMM2,
+                    fullCudaCores: fullCudaCores,
+                    dieUtilizationRatio: dieUtilizationRatio,
+                    effectiveDieSize: effectiveDieSize,
+                    generation: dieInfo.generation || "Unknown",
+                    adjustmentMultiplier: adjustmentMultiplier, // Store the used multiplier
+                    adjustmentType: adjustmentType, // Store the type for tooltip
                     originalMsrp: gpu.msrp,
-                    adjustedMsrp: adjustedMsrp,
-                    // Calculate price per actual die area and effective die area (with or without inflation adjustment)
-                    pricePerMM2: adjustedMsrp / dieInfo.dieSizeMM2, // Price per mm² (possibly inflation adjusted)
-                    effectivePricePerMM2: adjustedMsrp / effectiveDieSize, // Price per effective mm² (possibly inflation adjusted)
-                    // Raw values without inflation adjustment (for tooltips)
+                    adjustedMsrp: adjustedMsrp, // This is the value used for calculations now
+                    // Calculate price/mm² based on adjusted MSRP
+                    pricePerMM2: adjustedMsrp / dieInfo.dieSizeMM2,
+                    effectivePricePerMM2: adjustedMsrp / effectiveDieSize,
+                    // Raw (nominal) values remain for reference
                     rawPricePerMM2: gpu.msrp / dieInfo.dieSizeMM2,
                     rawEffectivePricePerMM2: gpu.msrp / effectiveDieSize,
-                    // Store both price metrics but determine which to use for display based on toggles
+                    // Determine which price/mm² metric to display based on die size toggle
                     displayPricePerMM2: useEffectiveDieSize ? (adjustedMsrp / effectiveDieSize) : (adjustedMsrp / dieInfo.dieSizeMM2)
                 };
             });
@@ -415,6 +519,18 @@ function DieAreaPlot({
             .attr("class", "y-axis")
             .call(yAxis);
 
+        // Determine Y-axis label based on adjustment
+        let yAxisLabelText = "Price per Die Area ($/mm²)";
+        
+        if (useCpiAdjustment && useRealWageScaling) {
+            yAxisLabelText = "Price per Die Area ($/mm², Scaled by Real Wage vs 2024)";
+        } else if (useCpiAdjustment && !useRealWageScaling) {
+            yAxisLabelText = `Price per Die Area ($/mm², ${inflationData.base_year} USD)`;
+        } else if (!useCpiAdjustment && useRealWageScaling) {
+            yAxisLabelText = "Price per Die Area ($/mm², Scaled by Nominal Wage vs 2024)";
+        }
+
+
         // Add Y axis label
         chartGroup.append("text")
             .attr("class", "y-axis-label")
@@ -424,7 +540,7 @@ function DieAreaPlot({
             .attr("x", -height / 2)
             .attr("fill", "#ddd")
             .style("font-size", "12px")
-            .text("Price per Die Area ($/mm²)");
+            .text(yAxisLabelText); // Use dynamic label
 
         // Y-Axis Gridlines
         const yGridlines = d3.axisLeft(yScale)
@@ -1133,35 +1249,36 @@ function DieAreaPlot({
                          .style('left', `${event.pageX + 15}px`)
                          .style('top', `${event.pageY - 10}px`);
 
+                     // Determine which nominal value to show if adjusted
+                     let nominalValueString = '';
+                     if (d.adjustmentType !== 'Nominal') {
+                         const nominalPricePerMM2 = useEffectiveDieSize ? d.rawEffectivePricePerMM2 : d.rawPricePerMM2;
+                         nominalValueString = ` <span style="color: #aaa;">($${nominalPricePerMM2.toFixed(2)} nominal)</span>`;
+                     }
+
                      // Create tooltip content
                      const tooltipContent = `
                          <div class="tooltip-title" style="color: ${colorScale(d.series)};">${d.model}</div>
                          <div class="tooltip-info">
                              <strong>Series:</strong> ${d.series} series (${d.generation})<br>
-                             <strong>MSRP:</strong> ${d.msrp ? `$${d.msrp.toLocaleString()}` : 'N/A'}
-                             ${useInflationAdjustment ? 
-                                 `<span style="color: #a0e6ff;"> (${d.inflationMultiplier.toFixed(2)}× to ${inflationData.base_year})</span>` : 
-                                 ''}<br>
+                             <strong>Original MSRP:</strong> ${d.originalMsrp ? `$${d.originalMsrp.toLocaleString()}` : 'N/A'}<br>
+                             ${d.adjustmentType !== 'Nominal' ? `<strong>Adjusted MSRP (${d.adjustmentType}):</strong> $${d.adjustedMsrp.toFixed(0)}<br>` : ''}
                              <strong>Die Size:</strong> ${d.dieSizeMM2 ? `${d.dieSizeMM2.toLocaleString()} mm²` : 'N/A'}<br>
                              <strong>CUDA Cores:</strong> ${d.cudaCores ? d.cudaCores.toLocaleString() : 'N/A'} / ${d.fullCudaCores ? d.fullCudaCores.toLocaleString() : 'N/A'}<br>
                              <strong>Die Utilization:</strong> ${d.dieUtilizationRatio != null ? `${(d.dieUtilizationRatio * 100).toFixed(1)}%` : 'N/A'}<br>
-                             
-                             ${useEffectiveDieSize ? 
-                                 `<strong>Effective Price per mm²:</strong>` : 
-                                 `<strong>Price per mm²:</strong>`} 
-                             ${d.displayPricePerMM2 != null && isFinite(d.displayPricePerMM2) ? 
-                                 `$${d.displayPricePerMM2.toFixed(2)}` : 
+
+                             <strong>${useEffectiveDieSize ? 'Effective' : 'Full'} Price per mm²:</strong>
+                             ${d.displayPricePerMM2 != null && isFinite(d.displayPricePerMM2) ?
+                                 `$${d.displayPricePerMM2.toFixed(2)}` :
                                  'N/A'}
-                             ${useInflationAdjustment ? 
-                                 ` <span style="color: #a0e6ff;">(${useEffectiveDieSize ? 
-                                    '$' + d.rawEffectivePricePerMM2.toFixed(2) : 
-                                    '$' + d.rawPricePerMM2.toFixed(2)} nominal)</span>` : 
-                                 ''}<br>
-                             
+                             ${nominalValueString}<br>
+                             <span style="color: #ccc; font-size: 0.9em;">(${d.adjustmentType})</span><br>
+
                              <strong>Die Name:</strong> ${d.dieName || 'N/A'}<br>
                              <strong>Year:</strong> ${d.releaseYear || 'N/A'}
                          </div>
                      `;
+
 
                      d3.select(`.${tooltipContainerClass}`).html(tooltipContent);
 
@@ -1189,16 +1306,13 @@ function DieAreaPlot({
         };
 
     }, [
-        dieAreaSvgRef,
         gpuData,
         gpuDieData,
+        dieAreaSvgRef,
         activeGenerations,
-        setActiveGenerations,
-        showAllDieGenerations,
-        setShowAllDieGenerations,
-        useEffectiveDieSize, // Add toggle state dependency to re-render when changed
-        useInflationAdjustment, // Add inflation toggle state dependency to re-render when changed
-        // Removed unused props: columnOrder, getTierFromModel
+        useEffectiveDieSize,
+        useCpiAdjustment, // Updated dependency
+        useRealWageScaling // Updated dependency
     ]);
 
     return (
