@@ -7,6 +7,7 @@ export default defineConfig({
   base: '/Nvidias_Core-ner_Cutting/', // Base path for GitHub Pages
   build: {
     outDir: '../docs',
+    emptyOutDir: true, // Empty the output directory before building
     rollupOptions: {
       output: {
         // Use manual chunking to consolidate files
