@@ -1,14 +1,28 @@
 {
-  "name": "nvidia-core-visualizer",
+  "name": "nvidia-gpu-analyzer",
   "version": "1.0.0",
-  "description": "A React-based visualization tool for Nvidia GPU core trends using D3.js.",
+  "description": "Interactive data visualization dashboard analyzing NVIDIA GPU specifications, pricing trends, and market positioning across multiple generations using D3.js and React.",
   "main": "src/main.jsx",
   "scripts": {
     "dev": "vite --host",
     "clean": "rm -rf ../docs",
     "build": "npm run clean && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mr-september/Nvidias_Core-ner_Cutting"
+  },
+  "homepage": "https://mr-september.github.io/Nvidias_Core-ner_Cutting/",
+  "keywords": [
+    "data-visualization",
+    "d3js",
+    "react",
+    "nvidia",
+    "gpu-analysis",
+    "interactive-charts"
+  ],
   "dependencies": {
     "d3": "^7.0.0",
     "react": "^18.0.0",
@@ -18,6 +32,6 @@
     "@vitejs/plugin-react": "^4.4.0",
     "vite": "^6.2.6"
   },
-  "author": "",
+  "author": "mr-september",
   "license": "MIT"
 }
