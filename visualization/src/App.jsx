@@ -140,7 +140,7 @@ function App() {
     return (
         <div className="App">
             {/* CUDA Plot Section */}
-            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>GPU Value Analyzer</h1>
+            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>NVIDIA GPU Analyzer</h1>
             <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
                 Interactive visualization of NVIDIA GPU specifications, pricing trends, and market positioning across generations.
             </p>
