@@ -2,7 +2,7 @@
 
 > Interactive data visualization dashboard for analyzing NVIDIA GPU specifications, pricing, and market trends across generations.
 
-**[Live Demo](https://mr-september.github.io/Nvidias_Core-ner_Cutting/)** · **[Report Bug](https://github.com/mr-september/Nvidias_Core-ner_Cutting/issues)**
+**[Live Demo](https://mr-september.github.io/nvidia-gpu-analyzer/)** · **[Report Bug](https://github.com/mr-september/nvidia-gpu-analyzer/issues)**
 
 ![React](https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-7.0-F9A03C?logo=d3.js&logoColor=white)
