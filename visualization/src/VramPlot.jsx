@@ -11,17 +11,17 @@ function VramPlot({
     gpuData,
     consoleData,
     columnOrder,
-    getTierFromModel, // Still needed for filtering by class
+    getTierFromModel,
     selectedClasses,
-    setSelectedClasses, // Need to pass setter down for legend clicks
-    showAllGenerations, // Need to pass value down for legend checkbox logic
-    setShowAllGenerations, // Need to pass setter down for legend checkbox clicks
+    setSelectedClasses,
+    showAllClasses,
+    setShowAllClasses,
     showConsoleData,
-    setShowConsoleData, // Need to pass setter down for toggle button
+    setShowConsoleData,
     visibleConsolePlatforms,
-    setVisibleConsolePlatforms, // Need to pass setter down for platform toggles
+    setVisibleConsolePlatforms,
     memoryAllocationPercentage,
-    setMemoryAllocationPercentage // Need to pass setter down for slider drag
+    setMemoryAllocationPercentage
 }) {
 
     useEffect(() => {
@@ -96,7 +96,7 @@ function VramPlot({
         const filteredData = gpuData.filter(d => {
             const tier = getTierFromModel(d.model);
             // Include if this class is selected or if we're showing all generations (classes)
-            return tier && (selectedClasses[tier] || showAllGenerations);
+            return tier && (selectedClasses[tier] || showAllClasses);
         });
 
         // Determine if we have GPU data points to display
@@ -524,7 +524,7 @@ function VramPlot({
                  // Ensure the class is selected or showAll is true AND there are GPUs in this class in the filteredData
                  const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
 
-                 if ((selectedClasses[gpuClass] || showAllGenerations) && gpusInClass.length > 0) {
+                 if ((selectedClasses[gpuClass] || showAllClasses) && gpusInClass.length > 0) {
                      groupedByClass[gpuClass] = gpusInClass
                          .sort((a, b) => a.releaseYear - b.releaseYear);
                  }
@@ -638,7 +638,7 @@ function VramPlot({
             .attr("opacity", d => selectedClasses[d] ? 1 : 0.5)
             .attr("class", "class-checkbox")
             .on("click", function(event, d) {
-                 if (setSelectedClasses && setShowAllGenerations) {
+                 if (setSelectedClasses && setshowAllClasses) {
                     setSelectedClasses(prev => {
                         const newState = {
                             ...prev,
@@ -646,14 +646,14 @@ function VramPlot({
                         };
 
                         // If we're deselecting a class and "Show All" is active, uncheck "Show All"
-                        if (prev[d] && showAllGenerations) {
-                            setShowAllGenerations(false);
+                        if (prev[d] && showAllClasses) {
+                            setshowAllClasses(false);
                         }
 
                         // If all classes become selected, check "Show All"
                         const allSelected = columnOrder.every(cls => newState[cls] === true);
                         if (allSelected) {
-                            setShowAllGenerations(true);
+                            setshowAllClasses(true);
                         }
 
                         return newState;
@@ -671,7 +671,7 @@ function VramPlot({
             .attr("cursor", "pointer")
             .attr("alignment-baseline", "middle")
             .on("click", function(event, d) {
-                 if (setSelectedClasses && setShowAllGenerations) {
+                 if (setSelectedClasses && setshowAllClasses) {
                     // Toggle this class's visibility (same as rect click)
                     setSelectedClasses(prev => {
                          const newState = {
@@ -679,21 +679,21 @@ function VramPlot({
                             [d]: !prev[d]
                         };
                          // If we're deselecting a class and "Show All" is active, uncheck "Show All"
-                        if (prev[d] && showAllGenerations) {
-                            setShowAllGenerations(false);
+                        if (prev[d] && showAllClasses) {
+                            setshowAllClasses(false);
                         }
 
                         // If all classes become selected, check "Show All"
                         const allSelected = columnOrder.every(cls => newState[cls] === true);
                         if (allSelected) {
-                            setShowAllGenerations(true);
+                            setshowAllClasses(true);
                         }
                          return newState;
                     });
                  }
             });
 
-        // Add "Show All" checkbox at the bottom (Calls setSelectedClasses, setShowAllGenerations)
+        // Add "Show All" checkbox at the bottom (Calls setSelectedClasses, setshowAllClasses)
         const showAllGroup = vramLegend.append("g")
             .attr("class", "legend-item")
             .attr("transform", `translate(0, ${columnOrder.length * 25 + 10})`);
@@ -704,21 +704,21 @@ function VramPlot({
             .attr("width", 15)
             .attr("height", 15)
             .attr("stroke", "#ddd")
-            .attr("fill", showAllGenerations ? "#646cff" : "transparent")
+            .attr("fill", showAllClasses ? "#646cff" : "transparent")
             .attr("rx", 3)
             .attr("ry", 3)
             .attr("cursor", "pointer")
             .on("click", function() {
-                 if (setSelectedClasses && setShowAllGenerations) {
+                 if (setSelectedClasses && setshowAllClasses) {
                     // Check if we're currently showing all
-                    if (showAllGenerations) {
+                    if (showAllClasses) {
                         // If already showing all, switch to hiding all
                         const allFalse = {};
                         columnOrder.forEach(cls => {
                             allFalse[cls] = false;
                         });
                         setSelectedClasses(allFalse);
-                        setShowAllGenerations(false); // Uncheck "Show All"
+                        setshowAllClasses(false); // Uncheck "Show All"
                     } else {
                         // If not showing all, set all to true
                          const allTrue = {};
@@ -726,7 +726,7 @@ function VramPlot({
                             allTrue[cls] = true;
                          });
                          setSelectedClasses(allTrue);
-                         setShowAllGenerations(true); // Check "Show All"
+                         setshowAllClasses(true); // Check "Show All"
                     }
                  }
             });
@@ -1087,8 +1087,8 @@ function VramPlot({
         getTierFromModel,
         selectedClasses, // Dependency for filtering and legend opacity/color
         setSelectedClasses, // Dependency for legend click handlers
-        showAllGenerations, // Dependency for filtering and legend checkbox state
-        setShowAllGenerations, // Dependency for legend checkbox clicks
+        showAllClasses, // Dependency for filtering and legend checkbox state
+        setshowAllClasses, // Dependency for legend checkbox clicks
         showConsoleData, // Dependency for drawing console data and positioning elements
         setShowConsoleData, // Dependency for console data toggle button
         visibleConsolePlatforms, // Dependency for filtering console data and platform legend opacity/color

@@ -13,18 +13,11 @@ function CudaPlot({
     toggleMode,
     useLogScale,
     specialFlagshipActive,
-    setSpecialFlagshipActive, // Need to pass setter down for legend clicks
+    setSpecialFlagshipActive,
     activeGenerations,
-    setActiveGenerations, // Need to pass setter down for legend clicks
-    showAllCudaGenerations, // Need to pass value down for legend checkbox logic
-    setShowAllCudaGenerations, // Need to pass setter down for legend checkbox clicks
-    // Tooltip props are passed but tooltip rendering is handled by D3 here
-    tooltipData,
-    tooltipPosition,
-    setTooltipData, // Passed down for column hover handler (though D3 does the work)
-    setTooltipPosition, // Passed down for column hover handler (though D3 does the work)
-    handleColumnHover, // Passed down as D3 event handler (D3 logic duplicates this)
-    handleColumnLeave // Passed down as D3 event handler (D3 logic duplicates this)
+    setActiveGenerations,
+    showAllCudaGenerations,
+    setShowAllCudaGenerations
 }) {
 
     useEffect(() => {

@@ -1,21 +1,23 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import * as d3 from 'd3'; // Keep D3 import here if needed elsewhere, though it's mainly in components now
+import React, { useEffect, useState, useRef } from 'react';
+import * as d3 from 'd3';
 import './App.css';
 import gpuData from './assets/gpu_data.json';
 import consoleData from './assets/console_data.json';
 import gpuDieData from './assets/gpu_die.json';
 
-// Import the components
 import CudaPlot from './CudaPlot';
 import VramPlot from './VramPlot';
 import DieAreaPlot from './DieAreaPlot';
 
 
-// Define the order of GPU tiers for the X-axis - Keep in App as it's shared config
+// GPU tier ordering for X-axis (flagship to entry-level)
 const columnOrder = ["90 Ti", "90", "80 Ti", "80", "70 Ti", "70", "60 Ti", "60", "50 Ti", "50", "30"];
 
-// Helper function to extract the tier string (e.g., "90 Ti", "80") from a model name
-// Keep in App as it's a shared utility, passed to components
+/**
+ * Extracts GPU tier from model name (e.g., "RTX 4090" -> "90")
+ * @param {string} modelName - Full GPU model name
+ * @returns {string|null} Tier string like "90 Ti" or "80", or null if unrecognized
+ */
 const getTierFromModel = (modelName) => {
     const name = modelName.toUpperCase();
     const numMatch = name.match(/(\d{2,4})/); // Match 2 to 4 digits often representing the tier part
@@ -53,20 +55,15 @@ function App() {
     // State related to CUDA chart
     const [toggleMode, setToggleMode] = useState(false);
     const [useLogScale, setUseLogScale] = useState(false);
-    const svgRef = useRef(); // Keep ref in App as per constraint
+    const svgRef = useRef();
     const [specialFlagshipActive, setSpecialFlagshipActive] = useState({});
-    const [activeGenerations, setActiveGenerations] = useState({}); // CUDA generations visibility
-    const [showAllCudaGenerations, setShowAllCudaGenerations] = useState(true); // CUDA show all toggle state
-
-    // State related to CUDA tooltip (managed in App, handlers passed to CudaPlot)
-    const [tooltipData, setTooltipData] = useState(null);
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-    const tooltipRef = useRef(); // Not strictly needed if D3 manages position directly
+    const [activeGenerations, setActiveGenerations] = useState({});
+    const [showAllCudaGenerations, setShowAllCudaGenerations] = useState(true);
 
 
-    // State related to VRAM chart
-    const vramSvgRef = useRef(); // Keep ref in App as per constraint
-    const [selectedClasses, setSelectedClasses] = useState({ // VRAM classes visibility
+    // VRAM chart state
+    const vramSvgRef = useRef();
+    const [selectedClasses, setSelectedClasses] = useState({
         "90 Ti": true,
         "90": true,
         "80 Ti": true,
@@ -79,7 +76,7 @@ function App() {
         "50": true,
         "30": false
     });
-    const [showAllGenerations, setShowAllGenerations] = useState(true); // VRAM show all classes toggle state
+    const [showAllClasses, setShowAllClasses] = useState(true); // Controls "Show All" checkbox for GPU classes
 
     // State for showing console data on VRAM chart
     const [showConsoleData, setShowConsoleData] = useState(true);
@@ -120,17 +117,14 @@ function App() {
              setSpecialFlagshipActive(initialSpecialFlagships);
         }
 
-         // Initialize selectedClasses and showAllGenerations for VRAM chart if empty
-         // This was originally inside the VRAM useEffect, now initialize here once
+         // Initialize selectedClasses and showAllClasses for VRAM chart if empty
          if (Object.keys(selectedClasses).length === 0 && columnOrder && columnOrder.length > 0) {
             const initialClasses = {};
             columnOrder.forEach(cls => {
-                // Keep the original default settings if columnOrder hasn't changed
-                // Otherwise, default to true for all classes
                 initialClasses[cls] = true;
             });
             setSelectedClasses(initialClasses);
-            setShowAllGenerations(true);
+            setShowAllClasses(true);
          }
 
          // Initialize visibleConsolePlatforms if empty
@@ -141,37 +135,14 @@ function App() {
              setVisibleConsolePlatforms(initialPlatforms);
          }
 
-    }, [gpuData, consoleData, columnOrder, activeGenerations, selectedClasses, visibleConsolePlatforms]); // Dependencies
-
-    // Function to handle CUDA column hover (kept in App, passed to CudaPlot)
-    // Note: The D3 code in CudaPlot will also handle tooltip positioning and content rendering directly,
-    // calling these handlers might be redundant unless React-managed tooltips are desired later.
-    // Keeping for now as per constraint, but the D3 logic in CudaPlot is the primary handler.
-    const handleColumnHover = useCallback((column, event, processedDataByColumn) => {
-         // The D3 code in the component handles the actual display and positioning.
-         // This React handler *could* be used to update React state (like tooltipData, tooltipPosition)
-         // for a React-rendered tooltip, but the original code used D3 to append to body.
-         // For now, just keep the function signature as it was in the original useEffect dependency array.
-         // The actual tooltip logic is duplicated in the CudaPlot useEffect for strict adherence.
-         // This is a good candidate for refactoring later (move tooltip state/rendering to App).
-    }, []); // Dependencies match original useCallback
-
-    // Function to hide CUDA tooltip (kept in App, passed to CudaPlot)
-    const handleColumnLeave = useCallback(() => {
-         // Same note as handleColumnHover - D3 handles hiding in CudaPlot's useEffect.
-    }, []); // Dependencies match original useCallback
-
-
-    // The useEffect hooks that previously drew the charts are removed from App.jsx
-    // and now reside within CudaPlot.jsx and VramPlot.jsx
-
+    }, [gpuData, consoleData, columnOrder, activeGenerations, selectedClasses, visibleConsolePlatforms]);
 
     return (
         <div className="App">
             {/* CUDA Plot Section */}
-            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>NVIDIA GPUs Architecture & Value Analyses</h1>
+            <h1 style={{ textAlign: 'center', margin: '20px 0' }}>GPU Value Analyzer</h1>
             <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
-                This is an open-source project. Please feel free to have a look at the source code and contribute!
+                Interactive visualization of NVIDIA GPU specifications, pricing trends, and market positioning across generations.
             </p>
             <p style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 20px', color: '#ddd' }}>
                 Each plot can have elements toggled on/off by click on the legend.
@@ -232,17 +203,11 @@ function App() {
                 toggleMode={toggleMode}
                 useLogScale={useLogScale}
                 specialFlagshipActive={specialFlagshipActive}
-                setSpecialFlagshipActive={setSpecialFlagshipActive} // Pass setter down
+                setSpecialFlagshipActive={setSpecialFlagshipActive}
                 activeGenerations={activeGenerations}
-                setActiveGenerations={setActiveGenerations} // Pass setter down
+                setActiveGenerations={setActiveGenerations}
                 showAllCudaGenerations={showAllCudaGenerations}
-                setShowAllCudaGenerations={setShowAllCudaGenerations} // Pass setter down
-                tooltipData={tooltipData} // Pass state down (redundant if D3 renders)
-                tooltipPosition={tooltipPosition} // Pass state down (redundant if D3 renders)
-                setTooltipData={setTooltipData} // Pass setter down (redundant if D3 renders)
-                setTooltipPosition={setTooltipPosition} // Pass setter down (redundant if D3 renders)
-                handleColumnHover={handleColumnHover} // Pass handler down
-                handleColumnLeave={handleColumnLeave} // Pass handler down
+                setShowAllCudaGenerations={setShowAllCudaGenerations}
             />
 
             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
@@ -261,18 +226,18 @@ function App() {
                         vramSvgRef={vramSvgRef}
                         gpuData={gpuData}
                         consoleData={consoleData}
-                        columnOrder={columnOrder} // Pass shared config
-                        getTierFromModel={getTierFromModel} // Pass shared utility
+                        columnOrder={columnOrder}
+                        getTierFromModel={getTierFromModel}
                         selectedClasses={selectedClasses}
-                        setSelectedClasses={setSelectedClasses} // Pass setter down
-                        showAllGenerations={showAllGenerations} // Note: This state name is misleading (it's for Classes), keep for now as per constraint
-                        setShowAllGenerations={setShowAllGenerations} // Pass setter down
+                        setSelectedClasses={setSelectedClasses}
+                        showAllClasses={showAllClasses}
+                        setShowAllClasses={setShowAllClasses}
                         showConsoleData={showConsoleData}
-                        setShowConsoleData={setShowConsoleData} // Pass setter down
+                        setShowConsoleData={setShowConsoleData}
                         visibleConsolePlatforms={visibleConsolePlatforms}
-                        setVisibleConsolePlatforms={setVisibleConsolePlatforms} // Pass setter down
+                        setVisibleConsolePlatforms={setVisibleConsolePlatforms}
                         memoryAllocationPercentage={memoryAllocationPercentage}
-                        setMemoryAllocationPercentage={setMemoryAllocationPercentage} // Pass setter down
+                        setMemoryAllocationPercentage={setMemoryAllocationPercentage}
                     />
                 </div>
             </div>
