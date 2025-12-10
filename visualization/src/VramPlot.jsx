@@ -25,10 +25,10 @@ function VramPlot({
 }) {
 
     useEffect(() => {
-         // Ensure data and ref are available
+        // Ensure data and ref are available
         if (!gpuData || !consoleData || !columnOrder || !getTierFromModel || !vramSvgRef.current) {
-             console.warn("VramPlot: Missing required props or ref.");
-             return;
+            console.warn("VramPlot: Missing required props or ref.");
+            return;
         }
 
         // Create or select the VRAM tooltip container in the DOM
@@ -76,7 +76,7 @@ function VramPlot({
         const height = 450 - margin.top - margin.bottom;
 
         svg.attr('width', width + margin.left + margin.right)
-           .attr('height', height + margin.top + margin.bottom);
+            .attr('height', height + margin.top + margin.bottom);
 
         // Add a rounded border for the chart area with transparent fill
         svg.append("rect")
@@ -117,7 +117,7 @@ function VramPlot({
         const allYears = [...new Set([...gpuYears, ...consoleYears])].sort((a, b) => a - b);
 
         // Use a wider domain for xScale if no years exist, to prevent errors
-         const xScaleDomain = allYears.length > 0 ? allYears : [2000, 2025]; // Default range if no data
+        const xScaleDomain = allYears.length > 0 ? allYears : [2000, 2025]; // Default range if no data
 
         // X scale for years - use all years from both datasets
         const xScale = d3.scalePoint()
@@ -135,12 +135,12 @@ function VramPlot({
                 // Store the original value as MB for display
                 d.memoryDisplay = `${numerator} MB`;
             } else if (d.memory != null) {
-                 // Already in GB or can be converted to number
-                 d.memoryGB = Number(d.memory);
-                 d.memoryDisplay = `${d.memory} GB`;
+                // Already in GB or can be converted to number
+                d.memoryGB = Number(d.memory);
+                d.memoryDisplay = `${d.memory} GB`;
             } else {
-                 d.memoryGB = 0; // Default if memory is null/undefined
-                 d.memoryDisplay = "N/A";
+                d.memoryGB = 0; // Default if memory is null/undefined
+                d.memoryDisplay = "N/A";
             }
         });
 
@@ -210,8 +210,8 @@ function VramPlot({
             .attr("class", "grid")
             .call(yGridlines)
             .selectAll("line")
-                .attr("stroke", "#e0e0e0")
-                .attr("stroke-opacity", 0.7);
+            .attr("stroke", "#e0e0e0")
+            .attr("stroke-opacity", 0.7);
         chartGroup.select(".grid .domain").remove();
 
         // Display "No data" message if no GPU data is available but keep the chart structure
@@ -245,17 +245,17 @@ function VramPlot({
 
             // Process consoles to identify same-year launches and sort by year
             const consolesByYear = {};
-             filteredConsoleData.forEach(console => {
-                 if (!consolesByYear[console.launchYear]) {
-                     consolesByYear[console.launchYear] = [];
-                 }
-                 consolesByYear[console.launchYear].push(console);
-             });
+            filteredConsoleData.forEach(console => {
+                if (!consolesByYear[console.launchYear]) {
+                    consolesByYear[console.launchYear] = [];
+                }
+                consolesByYear[console.launchYear].push(console);
+            });
 
-             // Sort console data within each year by platform or name for consistent stacking if needed
-             Object.values(consolesByYear).forEach(consoles => {
-                 consoles.sort((a, b) => a.platform.localeCompare(b.platform)); // Sort by platform name
-             });
+            // Sort console data within each year by platform or name for consistent stacking if needed
+            Object.values(consolesByYear).forEach(consoles => {
+                consoles.sort((a, b) => a.platform.localeCompare(b.platform)); // Sort by platform name
+            });
 
 
             const allConsoleYears = Object.keys(consolesByYear).map(Number).sort((a, b) => a - b);
@@ -265,18 +265,18 @@ function VramPlot({
                 const x = xScale(year);
                 if (x !== undefined) {
                     // Find the console with the highest *scaled* memory in this year based on current percentage
-                     const scaledMemoryValues = consolesByYear[year]
-                         .map(c => {
+                    const scaledMemoryValues = consolesByYear[year]
+                        .map(c => {
                             // Only scale unified memory
                             const isDedicatedVRAM = (
                                 c.name.includes('PS1') ||
                                 c.name.includes('PS2') ||
                                 c.name.includes('PS3')
                             );
-                             return isDedicatedVRAM ? c.memoryGB : c.memoryGB * (memoryAllocationPercentage / 100);
-                         });
-                     const highestScaledMemory = Math.max(...scaledMemoryValues);
-                     const y1 = yScale(highestScaledMemory); // Starting y position at the console's scaled memory level
+                            return isDedicatedVRAM ? c.memoryGB : c.memoryGB * (memoryAllocationPercentage / 100);
+                        });
+                    const highestScaledMemory = Math.max(...scaledMemoryValues);
+                    const y1 = yScale(highestScaledMemory); // Starting y position at the console's scaled memory level
 
                     // Draw a vertical grid line from the console's scaled memory level up to the top of the chart
                     consoleLayer.append("line")
@@ -302,7 +302,7 @@ function VramPlot({
                     if (x === undefined) return; // Skip if year is not in the scale
 
                     // Calculate the console's actual y position based on memoryGB
-                     const actualY = yScale(console.memoryGB);
+                    const actualY = yScale(console.memoryGB);
 
                     // --- Unified memory scaling logic ---
                     // Only scale for consoles with unified memory (not PS1, PS2, PS3)
@@ -313,12 +313,12 @@ function VramPlot({
                     );
                     let scaledY = actualY; // Default to actual Y
                     if (!isDedicatedVRAM) {
-                         // Calculate the distance from the x-axis (yScale(0)) to the console's actual memory position
-                         const distanceToAxis = yScale(0) - actualY;
-                         // Scale this distance by the memoryAllocationPercentage
-                         const scaledDistance = distanceToAxis * (memoryAllocationPercentage / 100);
-                         // The new y position is the x-axis position minus the scaled distance
-                         scaledY = yScale(0) - scaledDistance;
+                        // Calculate the distance from the x-axis (yScale(0)) to the console's actual memory position
+                        const distanceToAxis = yScale(0) - actualY;
+                        // Scale this distance by the memoryAllocationPercentage
+                        const scaledDistance = distanceToAxis * (memoryAllocationPercentage / 100);
+                        // The new y position is the x-axis position minus the scaled distance
+                        scaledY = yScale(0) - scaledDistance;
                     }
 
                     // Calculate the right edge (either to the next year with consoles or the chart end)
@@ -348,11 +348,11 @@ function VramPlot({
 
                     // Store console data on the year for lookup on hover (ensure array exists)
                     if (!consolesByYear[year].tooltipData) {
-                         consolesByYear[year].tooltipData = [];
+                        consolesByYear[year].tooltipData = [];
                     }
                     // Prevent duplicates if effect runs multiple times before cleanup
                     if (!consolesByYear[year].tooltipData.find(c => c.name === console.name)) {
-                         consolesByYear[year].tooltipData.push(console);
+                        consolesByYear[year].tooltipData.push(console);
                     }
 
 
@@ -367,7 +367,7 @@ function VramPlot({
                             .attr("stroke", "none")
                             .attr("class", "console-rect")
                             .attr("data-year", year)
-                            .on("mouseover", function(event) {
+                            .on("mouseover", function (event) {
                                 // Show and position tooltip
                                 d3.select('.console-tooltip-container')
                                     .style('visibility', 'visible')
@@ -406,7 +406,7 @@ function VramPlot({
                                         (console.platform === "PlayStation" ? "rgba(0, 180, 209, 0.3)" : "rgba(16, 190, 120, 0.3)") :
                                         (console.platform === "PlayStation" ? "rgba(0, 112, 209, 0.3)" : "rgba(16, 124, 16, 0.3)"));
                             })
-                            .on('mouseout', function() {
+                            .on('mouseout', function () {
                                 // Hide tooltip
                                 d3.select('.console-tooltip-container')
                                     .style('visibility', 'hidden');
@@ -419,11 +419,11 @@ function VramPlot({
                         // Add console name label at the top with vertical staggering for same-year launches
                         // Always show a label for key consoles, regardless of width
                         const isKeyConsole = console.name.includes("360") ||
-                                           console.name.includes("4 Pro") ||
-                                           console.name.includes("One X") ||
-                                           console.name.includes("PS5") || // Add PS5/Series X as key consoles
-                                           console.name.includes("Series X") ||
-                                            console.name.includes("Series S");
+                            console.name.includes("4 Pro") ||
+                            console.name.includes("One X") ||
+                            console.name.includes("PS5") || // Add PS5/Series X as key consoles
+                            console.name.includes("Series X") ||
+                            console.name.includes("Series S");
 
 
                         if (rectWidth > 40 || isKeyConsole) {
@@ -441,7 +441,7 @@ function VramPlot({
                                     if (console.name.includes("Pro")) {
                                         labelText += " Pro";
                                     } else if (console.name.includes("Slim")) { // Add Slim if needed
-                                         labelText += " Slim";
+                                        labelText += " Slim";
                                     }
                                 } else {
                                     labelText = "PS"; // Fallback
@@ -467,8 +467,8 @@ function VramPlot({
                             // Check if we need to break the label into two lines
                             if (console.name.includes("4 Pro")) {
                                 // Check if Xbox One X exists in the same year range AND Xbox platform is visible
-                                const hasXboxOneX = filteredConsoleData.some(c => 
-                                    c && c.name && 
+                                const hasXboxOneX = filteredConsoleData.some(c =>
+                                    c && c.name &&
                                     c.name.includes("One X") &&
                                     visibleConsolePlatforms["Xbox"] // Make sure Xbox is actually visible
                                 );
@@ -521,13 +521,13 @@ function VramPlot({
             // Group data by GPU class
             const groupedByClass = {};
             columnOrder.forEach(gpuClass => {
-                 // Ensure the class is selected or showAll is true AND there are GPUs in this class in the filteredData
-                 const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
+                // Ensure the class is selected or showAll is true AND there are GPUs in this class in the filteredData
+                const gpusInClass = filteredData.filter(d => getTierFromModel(d.model) === gpuClass);
 
-                 if ((selectedClasses[gpuClass] || showAllClasses) && gpusInClass.length > 0) {
-                     groupedByClass[gpuClass] = gpusInClass
-                         .sort((a, b) => a.releaseYear - b.releaseYear);
-                 }
+                if ((selectedClasses[gpuClass] || showAllClasses) && gpusInClass.length > 0) {
+                    groupedByClass[gpuClass] = gpusInClass
+                        .sort((a, b) => a.releaseYear - b.releaseYear);
+                }
             });
 
 
@@ -560,7 +560,7 @@ function VramPlot({
                     .attr('fill', classColorScale(gpuClass)) // Use class color for dots
                     .attr('stroke', '#fff')
                     .attr('stroke-width', 0.5)
-                    .on('mouseover', function(event, d) {
+                    .on('mouseover', function (event, d) {
                         // Show and position tooltip
                         d3.select('.vram-tooltip-container')
                             .style('visibility', 'visible')
@@ -585,7 +585,7 @@ function VramPlot({
                             .attr('r', 6)
                             .attr('stroke-width', 2);
                     })
-                    .on('mouseout', function() {
+                    .on('mouseout', function () {
                         // Hide tooltip
                         d3.select('.vram-tooltip-container')
                             .style('visibility', 'hidden');
@@ -637,8 +637,8 @@ function VramPlot({
             .attr("cursor", "pointer")
             .attr("opacity", d => selectedClasses[d] ? 1 : 0.5)
             .attr("class", "class-checkbox")
-            .on("click", function(event, d) {
-                 if (setSelectedClasses && setshowAllClasses) {
+            .on("click", function (event, d) {
+                if (setSelectedClasses && setShowAllClasses) {
                     setSelectedClasses(prev => {
                         const newState = {
                             ...prev,
@@ -647,18 +647,18 @@ function VramPlot({
 
                         // If we're deselecting a class and "Show All" is active, uncheck "Show All"
                         if (prev[d] && showAllClasses) {
-                            setshowAllClasses(false);
+                            setShowAllClasses(false);
                         }
 
                         // If all classes become selected, check "Show All"
                         const allSelected = columnOrder.every(cls => newState[cls] === true);
                         if (allSelected) {
-                            setshowAllClasses(true);
+                            setShowAllClasses(true);
                         }
 
                         return newState;
                     });
-                 }
+                }
             });
 
         // Label for each GPU class with toggle functionality
@@ -670,30 +670,30 @@ function VramPlot({
             .text(d => `xx${d}`)
             .attr("cursor", "pointer")
             .attr("alignment-baseline", "middle")
-            .on("click", function(event, d) {
-                 if (setSelectedClasses && setshowAllClasses) {
+            .on("click", function (event, d) {
+                if (setSelectedClasses && setShowAllClasses) {
                     // Toggle this class's visibility (same as rect click)
                     setSelectedClasses(prev => {
-                         const newState = {
+                        const newState = {
                             ...prev,
                             [d]: !prev[d]
                         };
-                         // If we're deselecting a class and "Show All" is active, uncheck "Show All"
+                        // If we're deselecting a class and "Show All" is active, uncheck "Show All"
                         if (prev[d] && showAllClasses) {
-                            setshowAllClasses(false);
+                            setShowAllClasses(false);
                         }
 
                         // If all classes become selected, check "Show All"
                         const allSelected = columnOrder.every(cls => newState[cls] === true);
                         if (allSelected) {
-                            setshowAllClasses(true);
+                            setShowAllClasses(true);
                         }
-                         return newState;
+                        return newState;
                     });
-                 }
+                }
             });
 
-        // Add "Show All" checkbox at the bottom (Calls setSelectedClasses, setshowAllClasses)
+        // Add "Show All" checkbox at the bottom (Calls setSelectedClasses, setShowAllClasses)
         const showAllGroup = vramLegend.append("g")
             .attr("class", "legend-item")
             .attr("transform", `translate(0, ${columnOrder.length * 25 + 10})`);
@@ -708,8 +708,8 @@ function VramPlot({
             .attr("rx", 3)
             .attr("ry", 3)
             .attr("cursor", "pointer")
-            .on("click", function() {
-                 if (setSelectedClasses && setshowAllClasses) {
+            .on("click", function () {
+                if (setSelectedClasses && setShowAllClasses) {
                     // Check if we're currently showing all
                     if (showAllClasses) {
                         // If already showing all, switch to hiding all
@@ -718,17 +718,17 @@ function VramPlot({
                             allFalse[cls] = false;
                         });
                         setSelectedClasses(allFalse);
-                        setshowAllClasses(false); // Uncheck "Show All"
+                        setShowAllClasses(false); // Uncheck "Show All"
                     } else {
                         // If not showing all, set all to true
-                         const allTrue = {};
-                         columnOrder.forEach(cls => {
+                        const allTrue = {};
+                        columnOrder.forEach(cls => {
                             allTrue[cls] = true;
-                         });
-                         setSelectedClasses(allTrue);
-                         setshowAllClasses(true); // Check "Show All"
+                        });
+                        setSelectedClasses(allTrue);
+                        setShowAllClasses(true); // Check "Show All"
                     }
-                 }
+                }
             });
 
         showAllGroup.append("text")
@@ -754,10 +754,10 @@ function VramPlot({
             .attr("rx", 3)
             .attr("ry", 3)
             .attr("cursor", "pointer")
-            .on("click", function() {
-                 if (setShowConsoleData) {
+            .on("click", function () {
+                if (setShowConsoleData) {
                     setShowConsoleData(showConsoleData => !showConsoleData);
-                 }
+                }
             });
 
         consoleToggleGroup.append("text")
@@ -805,13 +805,13 @@ function VramPlot({
                 .attr("height", 15)
                 .attr("fill", "transparent")
                 .attr("cursor", "pointer")
-                .on("click", function() {
+                .on("click", function () {
                     if (setVisibleConsolePlatforms) {
-                         const newValue = !visibleConsolePlatforms["PlayStation"];
-                         setVisibleConsolePlatforms(prev => ({
-                             ...prev,
-                             "PlayStation": newValue
-                         }));
+                        const newValue = !visibleConsolePlatforms["PlayStation"];
+                        setVisibleConsolePlatforms(prev => ({
+                            ...prev,
+                            "PlayStation": newValue
+                        }));
                     }
                 });
 
@@ -846,21 +846,21 @@ function VramPlot({
                 .attr("height", 15)
                 .attr("fill", "transparent")
                 .attr("cursor", "pointer")
-                .on("click", function() {
-                     if (setVisibleConsolePlatforms) {
+                .on("click", function () {
+                    if (setVisibleConsolePlatforms) {
                         const newValue = !visibleConsolePlatforms["Xbox"];
                         setVisibleConsolePlatforms(prev => ({
                             ...prev,
                             "Xbox": newValue
                         }));
-                     }
+                    }
                 });
         }
 
         // Position the unified memory slider under the legend, properly aligned and matching style
         // Create a header with the same style as the GPU Classes header
         const memoryControlHeaderY = -20;
-         vramLegend.append("text")
+        vramLegend.append("text")
             .attr("x", 80) // Position relative to the legend group
             .attr("y", memoryControlHeaderY)
             .attr("text-anchor", "middle")
@@ -976,11 +976,11 @@ function VramPlot({
         const createArrowPath = (yPos, direction) => {
             const arrowY = yPos + (direction === 'up' ? -3.5 : 3.5); // Center the arrow base
             const tipY = yPos + (direction === 'up' ? -arrowSize - 1.5 : arrowSize + 1.5);
-             // Ensure path coordinates are valid numbers
-             if (isNaN(arrowY) || isNaN(tipY)) return "";
-            return `M ${sliderX + sliderWidth/2 - arrowSize/2} ${arrowY}
-                    L ${sliderX + sliderWidth/2 + arrowSize/2} ${arrowY}
-                    L ${sliderX + sliderWidth/2} ${tipY}Z`;
+            // Ensure path coordinates are valid numbers
+            if (isNaN(arrowY) || isNaN(tipY)) return "";
+            return `M ${sliderX + sliderWidth / 2 - arrowSize / 2} ${arrowY}
+                    L ${sliderX + sliderWidth / 2 + arrowSize / 2} ${arrowY}
+                    L ${sliderX + sliderWidth / 2} ${tipY}Z`;
         };
 
         const topArrow = sliderGroup.append("path")
@@ -996,10 +996,10 @@ function VramPlot({
 
         // Add drag behavior to the handle (Calls setMemoryAllocationPercentage)
         const drag = d3.drag()
-            .on("start", function() {
+            .on("start", function () {
                 d3.select(this).attr("fill", "#535bf2"); // Darken on drag start
             })
-            .on("start drag", function(event) {
+            .on("start drag", function (event) {
                 // Create a property to store initial values if this is the drag start
                 if (!this.initialDragData) {
                     const handlePosition = parseFloat(d3.select(this).attr("y")) + 6; // Get current handle center position (+6 because handle is centered)
@@ -1008,13 +1008,13 @@ function VramPlot({
                         eventY: event.sourceEvent.clientY
                     };
                 }
-                
+
                 // Calculate the displacement from the initial position
                 const displacement = event.sourceEvent.clientY - this.initialDragData.eventY;
-                
+
                 // Apply the displacement to the original handle position
                 const dragY = this.initialDragData.handlePosition + displacement;
-                
+
                 // Calculate the constrained position within track boundaries
                 const newY = Math.max(trackY, Math.min(trackY + sliderHeight, dragY)); // Constrain Y relative to sliderGroup and trackY
 
@@ -1025,8 +1025,8 @@ function VramPlot({
                 handleGlow.attr("y", newY - 7); // Center glow vertically around newY
 
                 // Update arrows position
-                 topArrow.attr("d", createArrowPath(newY, 'up'));
-                 bottomArrow.attr("d", createArrowPath(newY, 'down'));
+                topArrow.attr("d", createArrowPath(newY, 'up'));
+                bottomArrow.attr("d", createArrowPath(newY, 'down'));
 
                 // Calculate the percentage directly from position within the track
                 // newY is relative to sliderGroup, trackY is the top of the track relative to sliderGroup
@@ -1042,17 +1042,17 @@ function VramPlot({
                 valueText.text(`${boundedValue}%`);
 
                 // Highlight the correct tick label
-                 sliderGroup.selectAll(".tick-label-text")
+                sliderGroup.selectAll(".tick-label-text")
                     .attr("fill", d => d === boundedValue ? "#646cff" : "#aaa")
                     .attr("font-weight", d => d === boundedValue ? "bold" : "normal");
 
                 // Update the React state (this triggers the chart re-render eventually)
-                 // Only update state if the value has changed to prevent unnecessary re-renders
-                 if (boundedValue !== memoryAllocationPercentage && setMemoryAllocationPercentage) {
+                // Only update state if the value has changed to prevent unnecessary re-renders
+                if (boundedValue !== memoryAllocationPercentage && setMemoryAllocationPercentage) {
                     setMemoryAllocationPercentage(boundedValue);
-                 }
+                }
             })
-            .on("end", function() {
+            .on("end", function () {
                 d3.select(this).attr("fill", "#646cff"); // Restore color on drag end
             });
 
@@ -1072,11 +1072,11 @@ function VramPlot({
             .text("* Colors represent GPU classes");
 
 
-            // Cleanup function to remove tooltips created by D3
-             return () => {
-                 d3.select('.vram-tooltip-container').remove();
-                 d3.select('.console-tooltip-container').remove();
-             };
+        // Cleanup function to remove tooltips created by D3
+        return () => {
+            d3.select('.vram-tooltip-container').remove();
+            d3.select('.console-tooltip-container').remove();
+        };
 
 
     }, [
@@ -1088,7 +1088,7 @@ function VramPlot({
         selectedClasses, // Dependency for filtering and legend opacity/color
         setSelectedClasses, // Dependency for legend click handlers
         showAllClasses, // Dependency for filtering and legend checkbox state
-        setshowAllClasses, // Dependency for legend checkbox clicks
+        setShowAllClasses, // Dependency for legend checkbox clicks
         showConsoleData, // Dependency for drawing console data and positioning elements
         setShowConsoleData, // Dependency for console data toggle button
         visibleConsolePlatforms, // Dependency for filtering console data and platform legend opacity/color
@@ -1099,7 +1099,7 @@ function VramPlot({
 
     return (
         // The SVG element where D3 will draw the chart
-         <svg ref={vramSvgRef} style={{ display: 'block', margin: '20px auto' }}></svg>
+        <svg ref={vramSvgRef} style={{ display: 'block', margin: '20px auto' }}></svg>
     );
 }
 

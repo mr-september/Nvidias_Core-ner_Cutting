@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import * as d3 from 'd3';
 import './App.css';
 import gpuData from './assets/gpu_data.json';
 import consoleData from './assets/console_data.json';
@@ -9,46 +8,8 @@ import CudaPlot from './CudaPlot';
 import VramPlot from './VramPlot';
 import DieAreaPlot from './DieAreaPlot';
 
-
-// GPU tier ordering for X-axis (flagship to entry-level)
-const columnOrder = ["90 Ti", "90", "80 Ti", "80", "70 Ti", "70", "60 Ti", "60", "50 Ti", "50", "30"];
-
-/**
- * Extracts GPU tier from model name (e.g., "RTX 4090" -> "90")
- * @param {string} modelName - Full GPU model name
- * @returns {string|null} Tier string like "90 Ti" or "80", or null if unrecognized
- */
-const getTierFromModel = (modelName) => {
-    const name = modelName.toUpperCase();
-    const numMatch = name.match(/(\d{2,4})/); // Match 2 to 4 digits often representing the tier part
-    if (!numMatch) return null; // Cannot determine tier
-
-    const numStr = numMatch[1];
-    const tierNum = parseInt(numStr.slice(-2), 10); // Usually the last two digits
-
-    let baseTier = null;
-    if (tierNum >= 90) baseTier = "90";
-    else if (tierNum >= 80) baseTier = "80";
-    else if (tierNum >= 70) baseTier = "70";
-    else if (tierNum >= 60) baseTier = "60";
-    else if (tierNum >= 50) baseTier = "50";
-    else if (tierNum >= 30) baseTier = "30";
-    // Add more tiers if needed
-
-    if (!baseTier) return null; // Unknown tier number
-
-    // Check for modifiers like "Ti" (case-insensitive, space required)
-    if (name.includes(" TI")) {
-        return `${baseTier} Ti`;
-    }
-    // Add checks for "SUPER" if needed
-    // else if (name.includes(" SUPER")) {
-    //     return `${baseTier} Super`;
-    // }
-    else {
-        return baseTier; // Non-Ti version
-    }
-};
+import { getTierFromModel } from './utils/tierUtils';
+import { columnOrder } from './utils/chartConfig';
 
 
 function App() {
@@ -89,13 +50,13 @@ function App() {
 
     // State for memory allocation slider (percentage of unified memory used as VRAM)
     const [memoryAllocationPercentage, setMemoryAllocationPercentage] = useState(100);
-    
+
     // State related to Die Area Price plot
     const dieAreaSvgRef = useRef();
     const [showAllDieGenerations, setShowAllDieGenerations] = useState(true);
 
-     // Initialize activeGenerations state based on data the first time
-     // This was originally inside the CUDA useEffect, now initialize here once
+    // Initialize activeGenerations state based on data the first time
+    // This was originally inside the CUDA useEffect, now initialize here once
     useEffect(() => {
         if (Object.keys(activeGenerations).length === 0 && gpuData && gpuData.length > 0) {
             const generations = Array.from(new Set(gpuData.map(d => d.series)));
@@ -104,36 +65,36 @@ function App() {
                 generationsObj[gen] = true; // All visible by default
             });
             setActiveGenerations(generationsObj);
-             // Initialize specialFlagshipActive based on data presence
-             const initialSpecialFlagships = {};
-             generations.forEach(gen => {
-                 const seriesData = gpuData.filter(d => d.series === gen);
-                 const hasSpecial = seriesData.some(d => d.specialFlagship);
-                 if (hasSpecial) {
-                     // Default to regular flagship being active unless specifically needed otherwise
-                     initialSpecialFlagships[gen] = false; // Default state is Regular
-                 }
-             });
-             setSpecialFlagshipActive(initialSpecialFlagships);
+            // Initialize specialFlagshipActive based on data presence
+            const initialSpecialFlagships = {};
+            generations.forEach(gen => {
+                const seriesData = gpuData.filter(d => d.series === gen);
+                const hasSpecial = seriesData.some(d => d.specialFlagship);
+                if (hasSpecial) {
+                    // Default to regular flagship being active unless specifically needed otherwise
+                    initialSpecialFlagships[gen] = false; // Default state is Regular
+                }
+            });
+            setSpecialFlagshipActive(initialSpecialFlagships);
         }
 
-         // Initialize selectedClasses and showAllClasses for VRAM chart if empty
-         if (Object.keys(selectedClasses).length === 0 && columnOrder && columnOrder.length > 0) {
+        // Initialize selectedClasses and showAllClasses for VRAM chart if empty
+        if (Object.keys(selectedClasses).length === 0 && columnOrder && columnOrder.length > 0) {
             const initialClasses = {};
             columnOrder.forEach(cls => {
                 initialClasses[cls] = true;
             });
             setSelectedClasses(initialClasses);
             setShowAllClasses(true);
-         }
+        }
 
-         // Initialize visibleConsolePlatforms if empty
-         if (Object.keys(visibleConsolePlatforms).length === 0 && consoleData && consoleData.length > 0) {
+        // Initialize visibleConsolePlatforms if empty
+        if (Object.keys(visibleConsolePlatforms).length === 0 && consoleData && consoleData.length > 0) {
             const platforms = Array.from(new Set(consoleData.map(d => d.platform)));
             const initialPlatforms = {};
-             platforms.forEach(p => { initialPlatforms[p] = true; });
-             setVisibleConsolePlatforms(initialPlatforms);
-         }
+            platforms.forEach(p => { initialPlatforms[p] = true; });
+            setVisibleConsolePlatforms(initialPlatforms);
+        }
 
     }, [gpuData, consoleData, columnOrder, activeGenerations, selectedClasses, visibleConsolePlatforms]);
 
@@ -170,8 +131,8 @@ function App() {
                         {useLogScale ? "Linear Scale" : "Log Scale"}
                     </button>
                 )}
-                 <a
-                    href="https://github.com/mr-september/Nvidias_Core-ner_Cutting"
+                <a
+                    href="https://github.com/mr-september/nvidia-gpu-analyzer"
                     target="_blank"
                     rel="noopener noreferrer"
                     title="View on GitHub"
@@ -241,11 +202,11 @@ function App() {
                     />
                 </div>
             </div>
-             {/* Notes for VRAM chart */}
-             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
+            {/* Notes for VRAM chart */}
+            <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
                 Console memory represents total system memory. Unified memory systems (PS4, Xbox One, and newer) dynamically allocate between CPU and GPU. The slider estimates VRAM based on this allocation percentage. Older consoles with dedicated VRAM are shown at their fixed amount regardless of slider position.
             </p>
-             <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.9em', color: '#aaa', maxWidth: '800px', margin: '15px auto 0', fontStyle: 'italic', textAlign: 'center' }}>
                 The xx60 class is the only class (so far) that had a regression in VRAM capacity.
             </p>
 

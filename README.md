@@ -49,8 +49,8 @@ This project provides an interactive visualization platform for exploring NVIDIA
 
 ```bash
 # Clone the repository
-git clone https://github.com/mr-september/Nvidias_Core-ner_Cutting.git
-cd Nvidias_Core-ner_Cutting/visualization
+git clone https://github.com/mr-september/nvidia-gpu-analyzer.git
+cd nvidia-gpu-analyzer/visualization
 
 # Install dependencies
 npm install

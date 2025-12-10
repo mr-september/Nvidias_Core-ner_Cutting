@@ -1,3 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Base CSS reset - Tailwind was referenced but not installed, so using minimal reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
